@@ -10,6 +10,5 @@ public class ApplicationContextTest {
 		ApplicationContext applicationContext = new MyClassPathXmlApplicationContext("classpath:applicationContext.xml");
 		Persion persion = applicationContext.getBean(Persion.class);
 		System.out.println(persion.getName());
-		System.out.println(1);
 	}
 }
