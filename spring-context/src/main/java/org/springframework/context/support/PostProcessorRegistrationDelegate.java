@@ -356,16 +356,24 @@ final class PostProcessorRegistrationDelegate {
 
 	private static void sortPostProcessors(List<?> postProcessors, ConfigurableListableBeanFactory beanFactory) {
 		// Nothing to sort?
+		// 如果postProcessors的个数小于等于1，那么不做任何排序操作
 		if (postProcessors.size() <= 1) {
 			return;
 		}
 		Comparator<Object> comparatorToUse = null;
+		// 判断是否是DefaultListableBeanFactory类型
 		if (beanFactory instanceof DefaultListableBeanFactory) {
+			// 获取设置的比较器
 			comparatorToUse = ((DefaultListableBeanFactory) beanFactory).getDependencyComparator();
 		}
 		if (comparatorToUse == null) {
+			// OrderComparator.INSTANCE:有序对象的比较实现，按顺序值升序或优先级降序排序,优先级由上往下：
+			// 1.PriorityOrderd对象
+			// 2.一些Order对象
+			// 3.无顺序对象
 			comparatorToUse = OrderComparator.INSTANCE;
 		}
+		// 使用比较器对postProcessors进行排序
 		postProcessors.sort(comparatorToUse);
 	}
 
@@ -376,6 +384,8 @@ final class PostProcessorRegistrationDelegate {
 			Collection<? extends BeanDefinitionRegistryPostProcessor> postProcessors, BeanDefinitionRegistry registry) {
 		// 遍历调用一遍
 		for (BeanDefinitionRegistryPostProcessor postProcessor : postProcessors) {
+			// 调用 postProcessor 的 postProcessBeanDefinitionRegistry
+			// 让所有postProcess往registry注册BeanDefinition对象
 			postProcessor.postProcessBeanDefinitionRegistry(registry);
 		}
 	}
@@ -387,6 +397,8 @@ final class PostProcessorRegistrationDelegate {
 			Collection<? extends BeanFactoryPostProcessor> postProcessors, ConfigurableListableBeanFactory beanFactory) {
 		// 遍历调用一遍
 		for (BeanFactoryPostProcessor postProcessor : postProcessors) {
+			// 回调 BeanFactoryPostProcessor 的 postProcessBeanFactory 方法
+			// 让所有postProcessor对象都可以对beanFactory进行调整
 			postProcessor.postProcessBeanFactory(beanFactory);
 		}
 	}
