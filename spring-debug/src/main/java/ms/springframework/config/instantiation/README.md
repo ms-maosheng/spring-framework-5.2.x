@@ -1,0 +1,1 @@
+通过resolveBeforeInstantiation()提前创建动态代理对象的方式创建bean

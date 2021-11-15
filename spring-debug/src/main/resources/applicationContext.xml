@@ -4,13 +4,13 @@
 	   xmlns:context="http://www.springframework.org/schema/context"
 	   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
  				 http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
-	<bean id="persion" class="org.springframework.bean.Persion">
+	<bean id="persion" class="ms.springframework.bean.Persion">
 		<property name="id" value="1"/>
 		<property name="name" value="张三"/>
 		<property name="address" value="浙江省杭州市西湖区"/>
 	</bean>
 
-	<context:component-scan base-package="org.springframework"/>
-	<bean name="myXmlBeanFactoryPostProcessor" class="org.springframework.config.MyXmlBeanFactoryPostProcessor"/>
-	<bean name="myXmlBeanDefinitionRegistryPostProcessor" class="org.springframework.config.MyXmlBeanDefinitionRegistryPostProcessor"/>
+	<context:component-scan base-package="ms.springframework"/>
+	<bean name="myXmlBeanFactoryPostProcessor" class="ms.springframework.config.MyXmlBeanFactoryPostProcessor"/>
+	<bean name="myXmlBeanDefinitionRegistryPostProcessor" class="ms.springframework.config.MyXmlBeanDefinitionRegistryPostProcessor"/>
 </beans>

@@ -1,4 +1,4 @@
-package org.springframework.bean;
+package ms.springframework.bean;
 
 public class Persion {
 	private String id;

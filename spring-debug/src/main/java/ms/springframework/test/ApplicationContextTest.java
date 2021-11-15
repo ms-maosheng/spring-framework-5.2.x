@@ -1,7 +1,7 @@
-package org.springframework.test;
+package ms.springframework.test;
 
-import org.springframework.bean.Persion;
-import org.springframework.config.MyClassPathXmlApplicationContext;
+import ms.springframework.bean.Persion;
+import ms.springframework.config.MyClassPathXmlApplicationContext;
 import org.springframework.context.ApplicationContext;
 
 public class ApplicationContextTest {

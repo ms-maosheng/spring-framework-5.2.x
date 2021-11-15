@@ -1,4 +1,4 @@
-package org.springframework.config;
+package ms.springframework.config;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
