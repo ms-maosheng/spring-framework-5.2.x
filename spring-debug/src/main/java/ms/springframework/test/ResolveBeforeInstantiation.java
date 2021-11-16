@@ -1,6 +1,6 @@
 package ms.springframework.test;
 
-import ms.springframework.config.instantiation.BeforeInstantiation;
+import ms.springframework.config.resolveBeforeInstantiation.BeforeInstantiation;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 

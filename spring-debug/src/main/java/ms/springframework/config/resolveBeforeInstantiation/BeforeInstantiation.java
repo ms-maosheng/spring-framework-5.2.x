@@ -1,4 +1,4 @@
-package ms.springframework.config.instantiation;
+package ms.springframework.config.resolveBeforeInstantiation;
 
 public class BeforeInstantiation {
 
