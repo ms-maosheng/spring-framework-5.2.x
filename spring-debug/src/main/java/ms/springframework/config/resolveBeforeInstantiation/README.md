@@ -1,1 +1,1 @@
-通过resolveBeforeInstantiation()提前创建动态代理对象的方式创建bean
+通过创建实例前的resolveBeforeInstantiation()通过拦截InstantiationAwareBeanPostProcessor实现提前创建动态代理对象的方式创建bean
