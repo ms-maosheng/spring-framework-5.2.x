@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+	<!-- 静态工厂方法通过指定class为工厂类直接返回实例 -->
+	<bean id="person" class="ms.springframework.config.factoryMethod.PersonStaticFactory" factory-method="getPerson">
+		<!--可以通过constructor-arg指定参数-->
+		<constructor-arg value="张三"/>
+	</bean>
+	<!-- 实例工厂先创建工厂对象再通过工厂对象创建实例 -->
+	<bean id="personInstanceFactory" class="ms.springframework.config.factoryMethod.PersonInstanceFactory"/>
+	<bean id="person2" class="ms.springframework.config.factoryMethod.Person" factory-bean="personInstanceFactory" factory-method="getPerson">
+		<constructor-arg value="李四"/>
+	</bean>
+</beans>
