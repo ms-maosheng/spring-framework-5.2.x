@@ -225,6 +225,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 					logger.debug("Creating shared instance of singleton bean '" + beanName + "'");
 				}
 				beforeSingletonCreation(beanName);
+				// 是否是新创建的单利对象，下面用于是否放到一级缓存
 				boolean newSingleton = false;
 				boolean recordSuppressedExceptions = (this.suppressedExceptions == null);
 				if (recordSuppressedExceptions) {
@@ -232,6 +233,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 				}
 				try {
 					singletonObject = singletonFactory.getObject();
+					// 创建成功后标识为新单例对象
 					newSingleton = true;
 				}
 				catch (IllegalStateException ex) {
@@ -257,6 +259,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 					afterSingletonCreation(beanName);
 				}
 				if (newSingleton) {
+					// 如果是新单例对象，将对象添加到一级缓存中
 					addSingleton(beanName, singletonObject);
 				}
 			}
