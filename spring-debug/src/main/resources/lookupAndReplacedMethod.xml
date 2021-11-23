@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+	
+	<bean id="getBeanTest" class="ms.springframework.config.lookupAndReplacedMethod.GetBeanTest">
+		<!-- 将GetBeanTest中的getBean方法的返回值替换成teacher -->
+		<lookup-method name="getBean" bean="teacher"/>
+	</bean>
+	<bean id="teacher" class="ms.springframework.config.lookupAndReplacedMethod.Teacher"/>
+	
+	<bean id="changeMethodTest" class="ms.springframework.config.lookupAndReplacedMethod.ChangeMethodTest">
+		<!-- 将需要被执行的方法替换成了MethodReplacedTest的reimplement方法 -->
+		<replaced-method name="changeMe" replacer="replacer"/>
+	</bean>
+	<!-- 指定一个替换方法的对象 -->
+	<bean id="replacer" class="ms.springframework.config.lookupAndReplacedMethod.MethodReplacedTest"/>
+</beans>
