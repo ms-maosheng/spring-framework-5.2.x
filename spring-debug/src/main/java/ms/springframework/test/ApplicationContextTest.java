@@ -7,8 +7,10 @@ import org.springframework.context.ApplicationContext;
 public class ApplicationContextTest {
 
 	public static void main(String[] args) {
+
+		// 多例对象缓存构造方法测试
 		ApplicationContext applicationContext = new MyClassPathXmlApplicationContext("classpath:applicationContext.xml");
-		Persion persion = (Persion)applicationContext.getBean("person2");
-		System.out.println(persion.getName());                                                                                                                                                                                                                                                                                      
+		Persion persion1 = applicationContext.getBean(Persion.class);
+		Persion persion2 = applicationContext.getBean(Persion.class);
 	}
 }
