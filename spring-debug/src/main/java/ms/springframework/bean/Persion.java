@@ -1,24 +1,36 @@
 package ms.springframework.bean;
 
+import org.springframework.stereotype.Component;
+
 public class Persion {
-	private String id;
+	private Integer id;
 	private String name;
 	private String address;
 
 	public Persion() {
 	}
 
-	public Persion(String id, String name, String address) {
+	public Persion(Integer id, String name) {
+		this.id = id;
+		this.name = name;
+	}
+
+	public Persion(String name, String address) {
+		this.name = name;
+		this.name = address;
+	}
+
+	public Persion(Integer id, String name, String address) {
 		this.id = id;
 		this.name = name;
 		this.address = address;
 	}
 
-	public String getId() {
+	public Integer getId() {
 		return id;
 	}
 
-	public void setId(String id) {
+	public void setId(Integer id) {
 		this.id = id;
 	}
 
