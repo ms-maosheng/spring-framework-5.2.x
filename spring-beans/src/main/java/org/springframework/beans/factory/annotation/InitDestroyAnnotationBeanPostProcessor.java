@@ -321,6 +321,9 @@ public class InitDestroyAnnotationBeanPostProcessor
 			this.checkedDestroyMethods = checkedDestroyMethods;
 		}
 
+		/**
+		 * 调用前面注册的初始化方法集合checkedInitMethods的所有方法
+		 */
 		public void invokeInitMethods(Object target, String beanName) throws Throwable {
 			Collection<LifecycleElement> checkedInitMethods = this.checkedInitMethods;
 			Collection<LifecycleElement> initMethodsToIterate =

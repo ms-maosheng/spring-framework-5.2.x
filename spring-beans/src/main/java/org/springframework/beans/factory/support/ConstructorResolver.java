@@ -129,7 +129,7 @@ class ConstructorResolver {
 		BeanWrapperImpl bw = new BeanWrapperImpl();
 		// 给包装对象设置一些属性
 		this.beanFactory.initBeanWrapper(bw);
-		// spring对这个bean进行实例化使用的构造函数
+		// 最终对这个bean进行实例化使用的构造函数
 		Constructor<?> constructorToUse = null;
 		// spring执行构造函数使用的是参数封装类
 		ArgumentsHolder argsHolderToUse = null;
@@ -164,7 +164,7 @@ class ConstructorResolver {
 				argsToUse = resolvePreparedArguments(beanName, mbd, bw, constructorToUse, argsToResolve);
 			}
 		}
-		// 没有找到构造函数和参数
+		// 没有找到构造函数和参数就需要寻找构造函数和参数
 		if (constructorToUse == null || argsToUse == null) {
 			// Take specified constructors, if any.
 			// 如果传入的构造器数组不为空，就使用传入的过后早期参数，否则通过反射获取class中定义的构造器

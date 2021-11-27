@@ -579,6 +579,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		}
 
 		// Allow post-processors to modify the merged bean definition.
+		// 允许beanPostProcessor去修改合并的beanDefinition
 		synchronized (mbd.postProcessingLock) {
 			if (!mbd.postProcessed) {
 				try {
@@ -595,6 +596,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 		// Eagerly cache singletons to be able to resolve circular references
 		// even when triggered by lifecycle interfaces like BeanFactoryAware.
+		// 判断当前bean是否需要提前曝光：单例&允许循环依赖&当前bean正在创建中，检测循环依赖
 		boolean earlySingletonExposure = (mbd.isSingleton() && this.allowCircularReferences &&
 				isSingletonCurrentlyInCreation(beanName));
 		if (earlySingletonExposure) {
@@ -602,13 +604,17 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 				logger.trace("Eagerly caching bean '" + beanName +
 						"' to allow for resolving potential circular references");
 			}
+			// 为避免后期循环依赖，可以在bean初始化完成前将创建实例的ObjectFactory加入工厂
 			addSingletonFactory(beanName, () -> getEarlyBeanReference(beanName, mbd, bean));
 		}
 
 		// Initialize the bean instance.
+		// 初始化bean实例
 		Object exposedObject = bean;
 		try {
+			// 对bean的属性进行填充，将各个属性值注入，其中，可能存在依赖于其他bean的属性，则会递归初始化依赖的bean
 			populateBean(beanName, mbd, instanceWrapper);
+			// 执行上面添加的初始化逻辑
 			exposedObject = initializeBean(beanName, exposedObject, mbd);
 		}
 		catch (Throwable ex) {
@@ -1250,7 +1256,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		}
 
 		// Preferred constructors for default construction?
-		// 找出最合适的默认构造方法 默认返回null
+		// 找出最合适的默认构造方法 默认返回null  GenericApplicationContext子类有重写加上构造方法加上@Primary会生效
 		ctors = mbd.getPreferredConstructors();
 		if (ctors != null) {
 			// 构造函数自动注入 默认上面返回null这里不会进来
@@ -1356,10 +1362,16 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 						getAccessControlContext());
 			}
 			else {
+				// 获取实例化策略默认使用CglibSubclassingInstantiationStrategy 并进行实例化操作
+				// 实例化方式分为五种
+				// SimpleInstantiationStrategy 提供了无参构造 有参构造 工厂方法
+				// CglibSubclassingInstantiationStrategy 提供了无参构造 有参构造
 				beanInstance = getInstantiationStrategy().instantiate(mbd, beanName, this);
 			}
+			// 将实例化的对象包装成BeanWrapper
 			BeanWrapper bw = new BeanWrapperImpl(beanInstance);
 			initBeanWrapper(bw);
+			// 将包装类返回去
 			return bw;
 		}
 		catch (Throwable ex) {
@@ -1820,33 +1832,44 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * @see #applyBeanPostProcessorsAfterInitialization
 	 */
 	protected Object initializeBean(String beanName, Object bean, @Nullable RootBeanDefinition mbd) {
+		// 如果安全管理器不为空
 		if (System.getSecurityManager() != null) {
+			// 以特权的方式执行回调bean中的Aware接口方法
 			AccessController.doPrivileged((PrivilegedAction<Object>) () -> {
 				invokeAwareMethods(beanName, bean);
 				return null;
 			}, getAccessControlContext());
 		}
 		else {
+			// Aware接口处理器，调用BeanNameAware、BeanClassLoaderAware、beanFactoryAware
 			invokeAwareMethods(beanName, bean);
 		}
 
 		Object wrappedBean = bean;
+		//如果mdb不为null || mbd不是"synthetic"。一般是指只有AOP相关的prointCut配置或者Advice配置才会将 synthetic设置为true
 		if (mbd == null || !mbd.isSynthetic()) {
+			// 将BeanPostProcessors应用到给定的现有Bean实例，调用它们的postProcessBeforeInitialization初始化方法。
+			// 返回的Bean实例可能是原始Bean包装器
 			wrappedBean = applyBeanPostProcessorsBeforeInitialization(wrappedBean, beanName);
 		}
 
 		try {
+			//调用初始化方法，先调用bean的InitializingBean接口方法，后调用bean的自定义初始化方法
 			invokeInitMethods(beanName, wrappedBean, mbd);
 		}
 		catch (Throwable ex) {
+			//捕捉调用初始化方法时抛出的异常，重新抛出Bean创建异常：调用初始化方法失败
 			throw new BeanCreationException(
 					(mbd != null ? mbd.getResourceDescription() : null),
 					beanName, "Invocation of init method failed", ex);
 		}
+		//如果mbd为null || mbd不是"synthetic"
 		if (mbd == null || !mbd.isSynthetic()) {
+			// 将BeanPostProcessors应用到给定的现有Bean实例，调用它们的postProcessAfterInitialization方法。
+			// 返回的Bean实例可能是原始Bean包装器
 			wrappedBean = applyBeanPostProcessorsAfterInitialization(wrappedBean, beanName);
 		}
-
+		//返回包装后的Bean
 		return wrappedBean;
 	}
 

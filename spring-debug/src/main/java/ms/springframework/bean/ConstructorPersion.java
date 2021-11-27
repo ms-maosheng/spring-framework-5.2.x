@@ -1,26 +1,27 @@
 package ms.springframework.bean;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
-public class Persion {
+public class ConstructorPersion {
 	private Integer id;
 	private String name;
 	private String address;
 
-	public Persion() {
+	public ConstructorPersion() {
 	}
-	public Persion(Integer id, String name) {
+
+	@Autowired
+	public ConstructorPersion(Integer id, String name) {
 		this.id = id;
 		this.name = name;
 	}
 
-	public Persion(String name, String address) {
+	public ConstructorPersion(String name, String address) {
 		this.name = name;
 		this.name = address;
 	}
 
-	public Persion(Integer id, String name, String address) {
+	public ConstructorPersion(Integer id, String name, String address) {
 		this.id = id;
 		this.name = name;
 		this.address = address;

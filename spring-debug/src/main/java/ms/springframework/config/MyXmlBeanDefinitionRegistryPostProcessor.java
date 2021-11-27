@@ -16,7 +16,7 @@ public class MyXmlBeanDefinitionRegistryPostProcessor implements BeanDefinitionR
 
 	@Override
 	public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
-        registry.registerBeanDefinition("addBDRPP", BeanDefinitionBuilder.genericBeanDefinition(MyAddBeanDefinitionRegistryPostProcessor.class).getBeanDefinition());
+        //registry.registerBeanDefinition("addBDRPP", BeanDefinitionBuilder.genericBeanDefinition(MyAddBeanDefinitionRegistryPostProcessor.class).getBeanDefinition());
         System.out.println("进入MyXmlBeanDefinitionRegistryPostProcessor--postProcessBeanDefinitionRegistry()");
     }
     

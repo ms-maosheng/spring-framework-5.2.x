@@ -21,8 +21,8 @@ public class MyClassPathXmlApplicationContext extends ClassPathXmlApplicationCon
 	protected void customizeBeanFactory(DefaultListableBeanFactory beanFactory) {
 		System.out.println("进入MyClassPathXmlApplicationContext().customizeBeanFactory()，自定义beanFactory");
 		// 个人自定义
-		super.addBeanFactoryPostProcessor(new MyAddBeanFactoryPostProcessor());
-		super.addBeanFactoryPostProcessor(new MyAddBeanDefinitionRegistryPostProcessor());
+		//super.addBeanFactoryPostProcessor(new MyAddBeanFactoryPostProcessor());
+		//super.addBeanFactoryPostProcessor(new MyAddBeanDefinitionRegistryPostProcessor());
 		// 执行父类方法
 		super.customizeBeanFactory(beanFactory);
 	}
