@@ -17,7 +17,7 @@
 		<constructor-arg name="name" value="张三"/>-->
 	</bean>
 
-	<context:component-scan base-package="ms.springframework"/>
+	<!--<context:component-scan base-package="ms.springframework"/>-->
 	<bean name="myXmlBeanFactoryPostProcessor" class="ms.springframework.config.MyXmlBeanFactoryPostProcessor"/>
 	<bean name="myXmlBeanDefinitionRegistryPostProcessor" class="ms.springframework.config.MyXmlBeanDefinitionRegistryPostProcessor"/>
 </beans>
