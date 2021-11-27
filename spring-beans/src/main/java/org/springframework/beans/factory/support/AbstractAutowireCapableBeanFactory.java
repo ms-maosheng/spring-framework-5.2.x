@@ -582,6 +582,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		synchronized (mbd.postProcessingLock) {
 			if (!mbd.postProcessed) {
 				try {
+					// MergedBeanDefinitionPostProcessor后置处理器修改合并bean的定义
 					applyMergedBeanDefinitionPostProcessors(mbd, beanType, beanName);
 				}
 				catch (Throwable ex) {
@@ -1224,7 +1225,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		}
 		// 有构造参数的或者工厂方法
 		if (resolved) {
-			// 构造器有参数
+			// 缓存的构造函数是否是有参构造
 			if (autowireNecessary) {
 				// 构造函数自动注入
 				return autowireConstructor(beanName, mbd, null, null);
@@ -1249,10 +1250,10 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		}
 
 		// Preferred constructors for default construction?
-		// 找出最合适的默认构造方法
+		// 找出最合适的默认构造方法 默认返回null
 		ctors = mbd.getPreferredConstructors();
 		if (ctors != null) {
-			// 构造函数自动注入
+			// 构造函数自动注入 默认上面返回null这里不会进来
 			return autowireConstructor(beanName, mbd, ctors, null);
 		}
 

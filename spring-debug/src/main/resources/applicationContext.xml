@@ -11,8 +11,10 @@
 	</bean>-->
 	<!-- 如果scope声明成多例，那么构造方法会被缓存到beanDefinition.resolvedConstructorOrFactoryMethod属性中 -->
 	<bean id="persion2" class="ms.springframework.bean.Persion" scope="prototype">
-		<constructor-arg name="id" value="2"/>
-		<constructor-arg name="name" value="张三"/>
+		<property name="id" value="1"/>
+		<property name="name" value="z张三"/>
+		<!--<constructor-arg name="id" value="2"/>
+		<constructor-arg name="name" value="张三"/>-->
 	</bean>
 
 	<context:component-scan base-package="ms.springframework"/>
