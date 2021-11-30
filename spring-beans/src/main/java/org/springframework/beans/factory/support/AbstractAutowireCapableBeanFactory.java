@@ -479,7 +479,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 		if (logger.isTraceEnabled()) {
 			logger.trace("Creating instance of bean '" + beanName + "'");
-		}
+		}// 赋值一下，
 		RootBeanDefinition mbdToUse = mbd;
 
 		// Make sure bean class is actually resolved at this point, and
@@ -1213,7 +1213,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		// 在使用构造器创建实例后，Spring会将解析过后确定下来的构造器或工厂方法保存在缓存中，避免再次创建相同bean时再次解析
 		
 		// Shortcut when re-creating the same bean...
-		// 标记下，防止重复创建同一个bean
+		// 标记下，防止重复获取bean的构造函数
 		boolean resolved = false;
 		// 是否需要自动装配
 		boolean autowireNecessary = false;

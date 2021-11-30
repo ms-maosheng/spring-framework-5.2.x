@@ -199,7 +199,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 	@Override
 	public Object getBean(String name) throws BeansException {
-		// 实际获取bean的方法，也是触发依赖注入的方法
+		// 通过字符串参数实际获取bean的方法，也是触发依赖注入的方法
 		return doGetBean(name, null, null, false);
 	}
 
@@ -313,7 +313,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				// 此处做了BeanDefinition对象的转换，当我们从xml文件中加载beandefinition对象的时候，封装的对象是GenericBeanDefinition,
 				// 此处要做类型转换，如果是子类bean的话，会合并父类的相关属性
 				RootBeanDefinition mbd = getMergedLocalBeanDefinition(beanName);
-				// 检查mbd的合法性，不合格会引发验证异常
+				// 检查mbd的合法性，不合格会引发验证异常 检查了是否是抽象bean
 				checkMergedBeanDefinition(mbd, beanName, args);
 
 				// Guarantee initialization of beans that the current bean depends on.
@@ -363,14 +363,21 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				// 原型模式bean的处理
 				else if (mbd.isPrototype()) {
 					// It's a prototype -> create a new instance.
+					// 它是一个原型 -> 创建一个新实例
+					// 定义prototype实例
 					Object prototypeInstance = null;
 					try {
+						// 创建Prototype对象前的准备工作，默认实现将beanName添加到prototypesCurrentlyInCreation（原型正在创建中）
 						beforePrototypeCreation(beanName);
+						// 为mbd(和参数)创建一个bean实例 和上面单例的是一个对象
 						prototypeInstance = createBean(beanName, mbd, args);
 					}
 					finally {
+						// 创建完prototype实例后的回调，默认是将beanName从prototypesCurrentlyInCreation移除
 						afterPrototypeCreation(beanName);
 					}
+					// 从beanInstance中获取公开的Bean对象，主要处理beanInstance是FactoryBean对象的情况，如果不是
+					// FactoryBean会直接返回beanInstance实例
 					bean = getObjectForBeanInstance(prototypeInstance, name, beanName, mbd);
 				}
 
