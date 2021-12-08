@@ -584,6 +584,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			if (!mbd.postProcessed) {
 				try {
 					// MergedBeanDefinitionPostProcessor后置处理器修改合并bean的定义
+					// 主要扫描注解，将注解信息添加到beanDefinition中后面初始化的时候处理
 					applyMergedBeanDefinitionPostProcessors(mbd, beanType, beanName);
 				}
 				catch (Throwable ex) {
