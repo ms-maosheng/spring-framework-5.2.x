@@ -2,26 +2,25 @@ package ms.springframework.bean;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class ConstructorPersion {
+public class ConstructorPerson {
 	private Integer id;
 	private String name;
 	private String address;
 
-	public ConstructorPersion() {
+	public ConstructorPerson() {
 	}
-
-	@Autowired
-	public ConstructorPersion(Integer id, String name) {
+	
+	public ConstructorPerson(Integer id, String name) {
 		this.id = id;
 		this.name = name;
 	}
 
-	public ConstructorPersion(String name, String address) {
+	public ConstructorPerson(String name, String address) {
 		this.name = name;
 		this.name = address;
 	}
 
-	public ConstructorPersion(Integer id, String name, String address) {
+	public ConstructorPerson(Integer id, String name, String address) {
 		this.id = id;
 		this.name = name;
 		this.address = address;
