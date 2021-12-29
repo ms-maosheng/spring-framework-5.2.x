@@ -1,5 +1,6 @@
 package ms.springframework.bean;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -11,6 +12,9 @@ public class User {
 	private Integer id;
 	private String name;
 
+	@Autowired
+	private Persion persion;
+	
 	@PostConstruct
 	public void init(){
 		System.out.println("执行init方法。。。");
