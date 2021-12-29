@@ -1427,13 +1427,17 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 */
 	@SuppressWarnings("deprecation")  // for postProcessPropertyValues
 	protected void populateBean(String beanName, RootBeanDefinition mbd, @Nullable BeanWrapper bw) {
+		// 如果beanWrapper为空
 		if (bw == null) {
+			// 如果mbd有需要设置的属性
 			if (mbd.hasPropertyValues()) {
+				// 抛出bean创建异常
 				throw new BeanCreationException(
 						mbd.getResourceDescription(), beanName, "Cannot apply property values to null instance");
 			}
 			else {
 				// Skip property population phase for null instance.
+				// 没有可填充的属性，直接跳过
 				return;
 			}
 		}
@@ -1441,9 +1445,15 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		// Give any InstantiationAwareBeanPostProcessors the opportunity to modify the
 		// state of the bean before properties are set. This can be used, for example,
 		// to support styles of field injection.
+		// 给任何实现了InstantiationAwareBeanPostProcessors的子类机会去修改bean的状态再设置属性之前，可以被用来支持类型的字段注入
+		// 否是"synthetic"。一般是指只有AOP相关的pointCut配置或者Advice配置才会将 synthetic设置为true
+		// 如果mdb是不是'syntheic'且工厂拥有InstantiationAwareBeanPostProcessor
 		if (!mbd.isSynthetic() && hasInstantiationAwareBeanPostProcessors()) {
+			//遍历工厂中的BeanPostProcessor对象
 			for (BeanPostProcessor bp : getBeanPostProcessors()) {
+				//如果 bp 是 InstantiationAwareBeanPostProcessor 实例
 				if (bp instanceof InstantiationAwareBeanPostProcessor) {
+					// postProcessAfterInstantiation：一般用于设置属性
 					InstantiationAwareBeanPostProcessor ibp = (InstantiationAwareBeanPostProcessor) bp;
 					if (!ibp.postProcessAfterInstantiation(bw.getWrappedInstance(), beanName)) {
 						return;
@@ -1451,20 +1461,28 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 				}
 			}
 		}
-
+		// PropertyValues：包含以一个或多个PropertyValue对象的容器，通常包括针对特定目标Bean的一次更新
+		// 如果mdb有PropertyValues就获取其PropertyValues
 		PropertyValues pvs = (mbd.hasPropertyValues() ? mbd.getPropertyValues() : null);
-
+		// 获取mbd的自动装配模式 byName byType。。。
 		int resolvedAutowireMode = mbd.getResolvedAutowireMode();
+		// 如果 自动装配模式 为 按名称自动装配bean属性 或者 按类型自动装配bean属性
 		if (resolvedAutowireMode == AUTOWIRE_BY_NAME || resolvedAutowireMode == AUTOWIRE_BY_TYPE) {
+			// MutablePropertyValues：PropertyValues接口的默认实现。允许对属性进行简单操作，并提供构造函数来支持从映射 进行深度复制和构造
 			MutablePropertyValues newPvs = new MutablePropertyValues(pvs);
 			// Add property values based on autowire by name if applicable.
+			// 根据autotowire的名称(如适用)添加属性值
 			if (resolvedAutowireMode == AUTOWIRE_BY_NAME) {
+				// 通过bw的PropertyDescriptor属性名，查找出对应的Bean对象，将其添加到newPvs中
 				autowireByName(beanName, mbd, bw, newPvs);
 			}
 			// Add property values based on autowire by type if applicable.
+			// 根据自动装配的类型(如果适用)添加属性值
 			if (resolvedAutowireMode == AUTOWIRE_BY_TYPE) {
+				// 通过bw的PropertyDescriptor属性类型，查找出对应的Bean对象，将其添加到newPvs中
 				autowireByType(beanName, mbd, bw, newPvs);
 			}
+			// 让pvs重新引用newPvs,newPvs此时已经包含了pvs的属性值以及通过AUTOWIRE_BY_NAME，AUTOWIRE_BY_TYPE自动装配所得到的属性值
 			pvs = newPvs;
 		}
 
@@ -1506,6 +1524,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	}
 
 	/**
+	 * 通过bw的PropertyDescriptor属性名，查找出对应的Bean对象，将其添加到pvs中
+	 *
 	 * Fill in any missing property values with references to
 	 * other beans in this factory if autowire is set to "byName".
 	 * @param beanName the name of the bean we're wiring up.
@@ -1516,13 +1536,19 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 */
 	protected void autowireByName(
 			String beanName, AbstractBeanDefinition mbd, BeanWrapper bw, MutablePropertyValues pvs) {
-
+		// 获取bw中有setter方法 && 非简单类型属性 && mbd的PropertyValues中没有该pd的属性名的 PropertyDescriptor 属性名数组
 		String[] propertyNames = unsatisfiedNonSimpleProperties(mbd, bw);
+		// 遍历属性名
 		for (String propertyName : propertyNames) {
+			// 如果该bean工厂有propertyName的beanDefinition或外部注册的singleton实例
 			if (containsBean(propertyName)) {
+				// 获取该工厂中propertyName的bean对象
 				Object bean = getBean(propertyName);
+				// 将propertyName,bean添加到pvs中
 				pvs.add(propertyName, bean);
+				// 注册propertyName与beanName的依赖关系
 				registerDependentBean(propertyName, beanName);
+				// 打印跟踪日志
 				if (logger.isTraceEnabled()) {
 					logger.trace("Added autowiring by name from bean name '" + beanName +
 							"' via property '" + propertyName + "' to bean named '" + propertyName + "'");
@@ -1538,6 +1564,8 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	}
 
 	/**
+	 * 定义 "按类型自动装配" (按类型bean属性)行为的抽象方法
+	 *
 	 * Abstract method defining "autowire by type" (bean properties by type) behavior.
 	 * <p>This is like PicoContainer default, in which there must be exactly one bean
 	 * of the property type in the bean factory. This makes bean factories simple to
@@ -1551,38 +1579,59 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	protected void autowireByType(
 			String beanName, AbstractBeanDefinition mbd, BeanWrapper bw, MutablePropertyValues pvs) {
 
+		//获取工厂的自定义类型转换器
 		TypeConverter converter = getCustomTypeConverter();
+		//如果没有配置自定义类型转换器
 		if (converter == null) {
+			//使用bw作为类型转换器
 			converter = bw;
 		}
-
+		//存放所有候选Bean名的集合
 		Set<String> autowiredBeanNames = new LinkedHashSet<>(4);
+		//获取bw中有setter方法 && 非简单类型属性 && mbd的PropertyValues中没有该pd的属性名的 PropertyDescriptor 属性名数组
 		String[] propertyNames = unsatisfiedNonSimpleProperties(mbd, bw);
+		//遍历属性名数组
 		for (String propertyName : propertyNames) {
 			try {
+				// PropertyDescriptor:表示JavaBean类通过存储器导出一个属性
+				// 从bw中获取propertyName对应的PropertyDescriptor
 				PropertyDescriptor pd = bw.getPropertyDescriptor(propertyName);
 				// Don't try autowiring by type for type Object: never makes sense,
 				// even if it technically is a unsatisfied, non-simple property.
+				// 不要尝试按类型自动装配对象：永远是有意义的，即使它在技术上是一个不满意，复杂属性
+				// 如果pd的属性值类型不是 Object
 				if (Object.class != pd.getPropertyType()) {
+					// 获取pd属性的Setter方法的方法参数包装对象
 					MethodParameter methodParam = BeanUtils.getWriteMethodParameter(pd);
 					// Do not allow eager init for type matching in case of a prioritized post-processor.
+					// 判断bean对象是否是PriorityOrder实例，如果不是就允许急于初始化来进行类型匹配。
+					// eager为true时会导致初始化lazy-init单例和由FactoryBeans(或带有"factory-bean"引用的工厂方法)创建 的对象以进行类型检查
 					boolean eager = !(bw.getWrappedInstance() instanceof PriorityOrdered);
+					// AutowireByTypeDependencyDescriptor:根据类型依赖自动注入的描述符，重写了 getDependencyName() 方法，使其永远返回null
+					// 将 methodParam 封装包装成AutowireByTypeDependencyDescriptor对象
 					DependencyDescriptor desc = new AutowireByTypeDependencyDescriptor(methodParam, eager);
+					// 根据据desc的依赖类型解析出与descriptor所包装的对象匹配的候选Bean对象
 					Object autowiredArgument = resolveDependency(desc, beanName, autowiredBeanNames, converter);
+					// 如果autowiredArgument不为null
 					if (autowiredArgument != null) {
+						//将proeprtyName.autowireArgument作为键值添加到pvs中
 						pvs.add(propertyName, autowiredArgument);
 					}
+					// 遍历所有候选Bean名集合
 					for (String autowiredBeanName : autowiredBeanNames) {
+						// 注册beanName与dependentBeanNamed的依赖关系
 						registerDependentBean(autowiredBeanName, beanName);
 						if (logger.isTraceEnabled()) {
 							logger.trace("Autowiring by type from bean name '" + beanName + "' via property '" +
 									propertyName + "' to bean named '" + autowiredBeanName + "'");
 						}
 					}
+					//将候选Bean名集合清空
 					autowiredBeanNames.clear();
 				}
 			}
 			catch (BeansException ex) {
+				// 捕捉自动装配时抛出的Bean异常，重新抛出 不满足依赖异常
 				throw new UnsatisfiedDependencyException(mbd.getResourceDescription(), beanName, propertyName, ex);
 			}
 		}
@@ -1590,6 +1639,9 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 
 	/**
+	 * 返回一个不满足要求的非简单bean属性数组。这些可能是对工厂中其他bean的不满意的引用。不包括简单属性，如原始或字符串
+	 * 获取bw中有setter方法 && 非简单类型属性 && mbd的PropertyValues中没有该pd的属性名的 PropertyDescriptor 属性名数组
+	 *
 	 * Return an array of non-simple bean properties that are unsatisfied.
 	 * These are probably unsatisfied references to other beans in the
 	 * factory. Does not include simple properties like primitives or Strings.
@@ -1599,15 +1651,22 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	 * @see org.springframework.beans.BeanUtils#isSimpleProperty
 	 */
 	protected String[] unsatisfiedNonSimpleProperties(AbstractBeanDefinition mbd, BeanWrapper bw) {
+		//TreeSet:TreeSet底层是二叉树，可以对对象元素进行排序，但是自定义类需要实现comparable接口，重写comparaTo()方法。
 		Set<String> result = new TreeSet<>();
+		//获取mdbd的所有属性值
 		PropertyValues pvs = mbd.getPropertyValues();
+		//PropertyDescriptor:表示JavaBean类通过存储器导出一个属性，获取bw的所有属性描述对象
 		PropertyDescriptor[] pds = bw.getPropertyDescriptors();
+		//遍历属性描述对象
 		for (PropertyDescriptor pd : pds) {
+			//如果 pd有写入属性方法 && 该pd不是被排除在依赖项检查之外 && pvs没有该pd的属性名 && pd的属性类型不是"简单值类型"
 			if (pd.getWriteMethod() != null && !isExcludedFromDependencyCheck(pd) && !pvs.contains(pd.getName()) &&
 					!BeanUtils.isSimpleProperty(pd.getPropertyType())) {
+				//将pdd的属性名添加到result中
 				result.add(pd.getName());
 			}
 		}
+		//将result装换成数组
 		return StringUtils.toStringArray(result);
 	}
 

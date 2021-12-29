@@ -1,7 +1,5 @@
 package ms.springframework.test;
 
-import ms.springframework.bean.ConstructorPersion;
-import ms.springframework.bean.Persion;
 import ms.springframework.bean.User;
 import ms.springframework.config.MyClassPathXmlApplicationContext;
 import org.springframework.context.ApplicationContext;

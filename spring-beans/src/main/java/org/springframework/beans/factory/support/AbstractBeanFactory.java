@@ -438,12 +438,18 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 	@Override
 	public boolean containsBean(String name) {
+		// 获取name最终的规范名称【最终别名】
 		String beanName = transformedBeanName(name);
+		// 如果beanName存在于singletonObjects【单例对象的高速缓存Map集合】中，
+		// 或者从beanDefinitionMap【Bean定义对象映射】中存在该beanName的BeanDefinition对象
 		if (containsSingleton(beanName) || containsBeanDefinition(beanName)) {
 			return (!BeanFactoryUtils.isFactoryDereference(name) || isFactoryBean(name));
 		}
 		// Not found -> check parent.
+		// 获取父工厂
 		BeanFactory parentBeanFactory = getParentBeanFactory();
+		// 如果父工厂不为null 则递归形式查询该name是否存在于父工厂，并返回执行结果；为null时直接返回false
+		// 因为经过上面步骤，已经确定当前工厂不存在该bean的BeanDefinition对象以及singleton实例
 		return (parentBeanFactory != null && parentBeanFactory.containsBean(originalBeanName(name)));
 	}
 
