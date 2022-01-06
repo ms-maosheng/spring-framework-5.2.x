@@ -3,6 +3,7 @@ package ms.springframework.test;
 import ms.springframework.bean.Persion;
 import ms.springframework.config.MyClassPathXmlApplicationContext;
 import ms.springframework.config.populateBean.Person;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 
 /**

@@ -568,8 +568,10 @@ public abstract class ReflectionUtils {
 	 */
 	@SuppressWarnings("deprecation")  // on JDK 9
 	public static void makeAccessible(Method method) {
+		// 如果(method不是public或者method的声明类不是public)且method不可访问
 		if ((!Modifier.isPublic(method.getModifiers()) ||
 				!Modifier.isPublic(method.getDeclaringClass().getModifiers())) && !method.isAccessible()) {
+			// 设置methid为可访问
 			method.setAccessible(true);
 		}
 	}
@@ -781,9 +783,11 @@ public abstract class ReflectionUtils {
 	 */
 	@SuppressWarnings("deprecation")  // on JDK 9
 	public static void makeAccessible(Field field) {
+		// 如果(fied不是'public'或者声明field的类不是是'public'或者field不是'final')且field不可访问
 		if ((!Modifier.isPublic(field.getModifiers()) ||
 				!Modifier.isPublic(field.getDeclaringClass().getModifiers()) ||
 				Modifier.isFinal(field.getModifiers())) && !field.isAccessible()) {
+			// 将field设置成可访问
 			field.setAccessible(true);
 		}
 	}

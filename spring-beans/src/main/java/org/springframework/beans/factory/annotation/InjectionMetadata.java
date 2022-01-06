@@ -226,17 +226,22 @@ public class InjectionMetadata {
 		protected void inject(Object target, @Nullable String requestingBeanName, @Nullable PropertyValues pvs)
 				throws Throwable {
 
+			// 属性注入
 			if (this.isField) {
 				Field field = (Field) this.member;
 				ReflectionUtils.makeAccessible(field);
+				// 如果是使用字段形式的注入，getResourceToInject由子类@ResourceElement实现
 				field.set(target, getResourceToInject(target, requestingBeanName));
 			}
 			else {
+				// 此步骤检测如果bean已经显示的设置一个对象依赖引用则跳过使用setter方法再次赋值
 				if (checkPropertySkipping(pvs)) {
 					return;
 				}
 				try {
+					// 方法注入
 					Method method = (Method) this.member;
+					// 支持私有方法
 					ReflectionUtils.makeAccessible(method);
 					method.invoke(target, getResourceToInject(target, requestingBeanName));
 				}
