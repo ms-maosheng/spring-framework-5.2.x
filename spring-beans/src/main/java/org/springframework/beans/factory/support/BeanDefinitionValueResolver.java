@@ -59,13 +59,13 @@ import org.springframework.util.StringUtils;
  * @see AbstractAutowireCapableBeanFactory
  */
 class BeanDefinitionValueResolver {
-
+	// 当前bean工厂
 	private final AbstractAutowireCapableBeanFactory beanFactory;
-
+	// 要使用的bean名称
 	private final String beanName;
-
+	// beanName对应的BeanDefinition
 	private final BeanDefinition beanDefinition;
-
+	// 用于解析TypeStringValues的TypeConverter
 	private final TypeConverter typeConverter;
 
 
@@ -374,39 +374,55 @@ class BeanDefinitionValueResolver {
 	@Nullable
 	private Object resolveReference(Object argName, RuntimeBeanReference ref) {
 		try {
+			// 定义返回值
 			Object bean;
+			// 获取属性Bean引用的类型
 			Class<?> beanType = ref.getBeanType();
+			// 如果引用来自父工厂从父工厂获取
 			if (ref.isToParent()) {
+				// 获取父工厂
 				BeanFactory parent = this.beanFactory.getParentBeanFactory();
+				// 父工厂为空抛异常
 				if (parent == null) {
 					throw new BeanCreationException(
 							this.beanDefinition.getResourceDescription(), this.beanName,
 							"Cannot resolve reference to bean " + ref +
 									" in parent factory: no parent factory available");
 				}
+				//如果引用的Bean类型不为null，从父工厂中获取bean对象
 				if (beanType != null) {
 					bean = parent.getBean(beanType);
 				}
 				else {
+					// 否则，使用引用的Bean名称从父工厂中获取对应的Bean对像
 					bean = parent.getBean(String.valueOf(doEvaluate(ref.getBeanName())));
 				}
 			}
 			else {
 				String resolvedName;
+				// 如果beanType不为null通过beanType获取
 				if (beanType != null) {
+					// 解析与beanType唯一匹配的bean实例，包括其bean名
 					NamedBeanHolder<?> namedBean = this.beanFactory.resolveNamedBean(beanType);
+					// 让bean引用nameBean所封装的Bean对象
 					bean = namedBean.getBeanInstance();
+					// 让resolvedName引用nameBean所封装的Bean名
 					resolvedName = namedBean.getBeanName();
 				}
 				else {
+					// 让resolvedName引用ref所包装的Bean名
 					resolvedName = String.valueOf(doEvaluate(ref.getBeanName()));
+					// 获取resolvedName的Bean对象
 					bean = this.beanFactory.getBean(resolvedName);
 				}
+				// 注册beanName与dependentBeanNamed的依赖关系到Bean工厂
 				this.beanFactory.registerDependentBean(resolvedName, this.beanName);
 			}
+			// 如果Bean对象是NullBean实例将Bean置为null
 			if (bean instanceof NullBean) {
 				bean = null;
 			}
+			// 返回解析出来对应ref所封装的Bean元信息(Bean名,Bean类型)的Bean对象
 			return bean;
 		}
 		catch (BeansException ex) {

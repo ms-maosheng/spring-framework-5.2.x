@@ -2,7 +2,7 @@ package ms.springframework.bean.cycle;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-public class A {
+public class A extends C{
 
 	@Autowired
 	private B b;

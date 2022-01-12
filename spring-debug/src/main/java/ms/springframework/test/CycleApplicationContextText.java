@@ -4,8 +4,10 @@ import ms.springframework.bean.cycle.A;
 import ms.springframework.bean.cycle.B;
 import ms.springframework.config.MyClassPathXmlApplicationContext;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
 
+/**
+ * 循环依赖测试类
+ */
 public class CycleApplicationContextText {
 	public static void main(String[] args) {
 		ApplicationContext applicationContext = new MyClassPathXmlApplicationContext("classpath:cycleApplicationContextText.xml");
@@ -16,3 +18,4 @@ public class CycleApplicationContextText {
 	}
 
 }
+ 

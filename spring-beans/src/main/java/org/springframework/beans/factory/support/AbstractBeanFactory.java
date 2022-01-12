@@ -114,65 +114,101 @@ import org.springframework.util.StringValueResolver;
  */
 public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport implements ConfigurableBeanFactory {
 
-	/** Parent bean factory, for bean inheritance support. */
+	/** 
+	 * 父bean工厂，用于bean继承支持。  
+	 * Parent bean factory, for bean inheritance support. */
 	@Nullable
 	private BeanFactory parentBeanFactory;
 
-	/** ClassLoader to resolve bean class names with, if necessary. */
+	/** 
+	 * 必要时使用ClassLoader解析Bean类名称,默认使用线程上下文类加载器
+	 * ClassLoader to resolve bean class names with, if necessary. */
 	@Nullable
 	private ClassLoader beanClassLoader = ClassUtils.getDefaultClassLoader();
 
-	/** ClassLoader to temporarily resolve bean class names with, if necessary. */
+	/** 
+	 * 必要时使用ClassLoader临时解析Bean类名称
+	 * ClassLoader to temporarily resolve bean class names with, if necessary. */
 	@Nullable
 	private ClassLoader tempClassLoader;
 
-	/** Whether to cache bean metadata or rather reobtain it for every access. */
+	/** 
+	 * 是否缓存bean元数据还是每次访问重新获取它
+	 * Whether to cache bean metadata or rather reobtain it for every access. */
 	private boolean cacheBeanMetadata = true;
 
-	/** Resolution strategy for expressions in bean definition values. */
+	/** 
+	 * bean定义值中表达式的解析策略,SpringBoot默认使用的是StandardBeanExpressionResolver
+	 * Resolution strategy for expressions in bean definition values. */
 	@Nullable
 	private BeanExpressionResolver beanExpressionResolver;
 
-	/** Spring ConversionService to use instead of PropertyEditors. */
+	/** 
+	 * ConversionService:一个类型转换的服务接口。这个转换系统的入口。 调用convert(Object, Class)去执行一个线程安全类型转换器使用此系统
+	 * Spring ConversionService to use instead of PropertyEditors. */
 	@Nullable
 	private ConversionService conversionService;
 
-	/** Custom PropertyEditorRegistrars to apply to the beans of this factory. */
+	/** 
+	 * 定制PropertyEditorRegistrars应用于此工厂的bean
+	 * Custom PropertyEditorRegistrars to apply to the beans of this factory. */
 	private final Set<PropertyEditorRegistrar> propertyEditorRegistrars = new LinkedHashSet<>(4);
 
-	/** Custom PropertyEditors to apply to the beans of this factory. */
+	/** 
+	 * 定制PropertyEditor应用于该工厂的bean
+	 * Custom PropertyEditors to apply to the beans of this factory. */
 	private final Map<Class<?>, Class<? extends PropertyEditor>> customEditors = new HashMap<>(4);
 
-	/** A custom TypeConverter to use, overriding the default PropertyEditor mechanism. */
+	/** 
+	 * 要使用的自定义类型转换器，覆盖默认的PropertyEditor机制
+	 * A custom TypeConverter to use, overriding the default PropertyEditor mechanism. */
 	@Nullable
 	private TypeConverter typeConverter;
 
-	/** String resolvers to apply e.g. to annotation attribute values. */
+	/** 
+	 * 字符串解析器适用于注解属性值
+	 * String resolvers to apply e.g. to annotation attribute values. */
 	private final List<StringValueResolver> embeddedValueResolvers = new CopyOnWriteArrayList<>();
 
-	/** BeanPostProcessors to apply. */
+	/** 
+	 * BeanPosProcessor应用于createBean
+	 * BeanPostProcessors to apply. */
 	private final List<BeanPostProcessor> beanPostProcessors = new CopyOnWriteArrayList<>();
 
-	/** Indicates whether any InstantiationAwareBeanPostProcessors have been registered. */
+	/** 
+	 * 指示是否已经注册了任何 InstantiationAwareBeanPostProcessors 对象
+	 * Indicates whether any InstantiationAwareBeanPostProcessors have been registered. */
 	private volatile boolean hasInstantiationAwareBeanPostProcessors;
 
-	/** Indicates whether any DestructionAwareBeanPostProcessors have been registered. */
+	/** 
+	 * 表明DestructionAwareBeanPostProcessors是否被注册
+	 * Indicates whether any DestructionAwareBeanPostProcessors have been registered. */
 	private volatile boolean hasDestructionAwareBeanPostProcessors;
 
-	/** Map from scope identifier String to corresponding Scope. */
+	/** 
+	 * 从作用域表示符String映射到相应的作用域
+	 * Map from scope identifier String to corresponding Scope. */
 	private final Map<String, Scope> scopes = new LinkedHashMap<>(8);
 
-	/** Security context used when running with a SecurityManager. */
+	/** 
+	 * 与SecurityManager一起运行时使用的安全上下文
+	 * Security context used when running with a SecurityManager. */
 	@Nullable
 	private SecurityContextProvider securityContextProvider;
 
-	/** Map from bean name to merged RootBeanDefinition. */
+	/** 
+	 * 从bean名称映射到合并的RootBeanDefinition
+	 * Map from bean name to merged RootBeanDefinition. */
 	private final Map<String, RootBeanDefinition> mergedBeanDefinitions = new ConcurrentHashMap<>(256);
 
-	/** Names of beans that have already been created at least once. */
+	/** 
+	 * 至少已经创建一次的bean名称
+	 * Names of beans that have already been created at least once. */
 	private final Set<String> alreadyCreated = Collections.newSetFromMap(new ConcurrentHashMap<>(256));
 
-	/** Names of beans that are currently in creation. */
+	/** 
+	 * 当前正在创建的bean名称
+	 * Names of beans that are currently in creation. */
 	private final ThreadLocal<Object> prototypesCurrentlyInCreation =
 			new NamedThreadLocal<>("Prototype beans currently in creation");
 
@@ -267,7 +303,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		else {
 			// Fail if we're already creating this bean instance:
 			// We're assumably within a circular reference.
-			// 当对象都是单例的时候会尝试解决循环依赖的问题，但是原型模式下如果存在循环依赖的情况，那么直接抛出异常
+			// 原型模式下如果存在循环依赖的情况抛出异常，单例模式会尝试解决循环依赖问题
 			if (isPrototypeCurrentlyInCreation(beanName)) {
 				throw new BeanCurrentlyInCreationException(beanName);
 			}
@@ -1151,7 +1187,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	}
 
 	/**
-	 * Return whether the specified prototype bean is currently in creation
+	 * 返回指定的原型bean是否当前正在创建中（在当前线程内）
+	 * 
 	 * (within the current thread).
 	 * @param beanName the name of the bean
 	 */
@@ -1533,8 +1570,11 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * @param beanName the bean name to clear the merged definition for
 	 */
 	protected void clearMergedBeanDefinition(String beanName) {
+		// 从合并后BeanDefinition集合缓存中获取beanName对应的合并后RootBeanDefinition对象
 		RootBeanDefinition bd = this.mergedBeanDefinitions.get(beanName);
+		// 如果成功获取到了bd
 		if (bd != null) {
+			// 将bd标记为需要重新合并定义
 			bd.stale = true;
 		}
 	}
@@ -1571,6 +1611,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			throws CannotLoadBeanClassException {
 
 		try {
+			// 判断mbd的定义信息中是否包含beanClass，并且是Class类型的，如果是直接返回，否则的话进行详细的解析
 			if (mbd.hasBeanClass()) {
 				return mbd.getBeanClass();
 			}
@@ -1579,6 +1620,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 						() -> doResolveBeanClass(mbd, typesToMatch), getAccessControlContext());
 			}
 			else {
+				// 进行详细的处理解析过程
 				return doResolveBeanClass(mbd, typesToMatch);
 			}
 		}
@@ -1828,11 +1870,16 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * @param beanName the name of the bean
 	 */
 	protected void markBeanAsCreated(String beanName) {
+		// 如果还没有被创建
 		if (!this.alreadyCreated.contains(beanName)) {
+			// 同步，使用mergedBenDefinitions作为锁
 			synchronized (this.mergedBeanDefinitions) {
+				// 如果beanName还没有创建
 				if (!this.alreadyCreated.contains(beanName)) {
 					// Let the bean definition get re-merged now that we're actually creating
 					// the bean... just in case some of its metadata changed in the meantime.
+					// 在我们实际创建时，重新合并bean定义,以防万一期间的某些元数据发生了变化
+					// 删除beanName合并bean定义，在下次访问时重新创建
 					clearMergedBeanDefinition(beanName);
 					this.alreadyCreated.add(beanName);
 				}

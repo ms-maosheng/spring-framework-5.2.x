@@ -16,9 +16,5 @@ public class SupplierBeanFactoryPostProcessor implements BeanFactoryPostProcesso
 		GenericBeanDefinition genericBeanDefinition = (GenericBeanDefinition)beanDefinition;
 		// 给user的BeanDefinition指定supplier创建实例
 		genericBeanDefinition.setInstanceSupplier(CreateSupplier::createUser);
-		// 设置生成实例的类型
-		// 这里通过supplier直接new创建对象不指定class也能创建
-		// 指定错误也能创建，但是BeanDefinitionMap中保存的beanClass是错误的？？？
-		//genericBeanDefinition.setBeanClass(Persion.class);
 	}
 }
