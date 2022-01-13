@@ -527,6 +527,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			// 给BeanPostProcessors一个机会来返回代理来替代真正的实例，
 			// 应用实例化前的前置处理器,用户自定义动态代理的方式，针对于当前的被代理类需要经过标准的代理流程来创建对象
 			// 提供一个通过BeanPostProcessors创建代理对象替换实例的扩展方式，应用实例化前的前置处理器
+			// Spring AOP动态代理实现
 			Object bean = resolveBeforeInstantiation(beanName, mbdToUse);
 			if (bean != null) {
 				return bean;
@@ -623,7 +624,13 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 						"' to allow for resolving potential circular references");
 			}
 			// 为避免后期循环依赖，可以在bean初始化完成前将创建实例的ObjectFactory加入工厂
-			addSingletonFactory(beanName, () -> getEarlyBeanReference(beanName, mbd, bean));
+			//addSingletonFactory(beanName, () -> getEarlyBeanReference(beanName, mbd, bean));
+			
+			
+			// -------------没有使用动态代理可以取消三级缓存 begin----------
+			super.getEarlySingletonObjects().put(beanName, bean);
+			super.getRegisteredSingletons().add(beanName);
+			//  -------------没有使用动态代理可以取消三级缓存end------------
 		}
 
 		// Initialize the bean instance.
@@ -1170,6 +1177,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 				Class<?> targetType = determineTargetType(beanName, mbd);
 				if (targetType != null) {
 					bean = applyBeanPostProcessorsBeforeInstantiation(targetType, beanName);
+					// 如果通过InstantiationAwareBeanPostProcessor处理器获得到了bean对象，那么执行alterInitialization
 					if (bean != null) {
 						bean = applyBeanPostProcessorsAfterInitialization(bean, beanName);
 					}
@@ -1181,6 +1189,9 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 	}
 
 	/**
+	 *  InstantiationAwareBeanPostProcessor类型的处理器处理，返回的是一个Object对象
+	 *  动态代理的实现，如果发现有一个处理器返回的不是null，就直接返回
+	 * 
 	 * Apply InstantiationAwareBeanPostProcessors to the specified bean definition
 	 * (by class and name), invoking their {@code postProcessBeforeInstantiation} methods.
 	 * <p>Any returned object will be used as the bean instead of actually instantiating

@@ -220,7 +220,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 * @param allowEarlyReference whether early references should be created or not
 	 * @return the registered singleton object, or {@code null} if none found
 	 */
-	@Nullable
+	/*@Nullable
 	protected Object getSingleton(String beanName, boolean allowEarlyReference) {
 		// Quick check for existing instance without full singleton lock
 		// 从单例对象缓存中获取beanName对应的单例对象
@@ -255,6 +255,19 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 			}
 		}
 		return singletonObject;
+	}*/
+
+	/**
+	 * 不使用动态代理的情况去除三级缓存
+	 */
+	@Nullable
+	public Object getSingleton(String beanName, boolean allowEarlyReference){
+		Object singletonObject = singletonObjects.get(beanName);
+		if(singletonObject == null && isSingletonCurrentlyInCreation(beanName)){
+			singletonObject = earlySingletonObjects.get(beanName);
+		}
+		return singletonObject;
+		
 	}
 
 	/**
@@ -715,4 +728,12 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 		return this.singletonObjects;
 	}
 
+
+	public Map<String, Object> getEarlySingletonObjects() {
+		return earlySingletonObjects;
+	}
+
+	public Set<String> getRegisteredSingletons() {
+		return registeredSingletons;
+	}
 }
