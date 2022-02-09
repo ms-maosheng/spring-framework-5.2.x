@@ -560,7 +560,10 @@ public class Enhancer extends AbstractClassGenerator {
 	}
 
 	private Object createHelper() {
+		// 校验callbackTypes、filter是否为空，以及为空时的处理
 		preValidate();
+		// 通过newInstance方法来创建EnhancerKey对象
+		// 正常情况下，只需要new一个对象就可以调用方法了，但是Key_Factory是一个EnhancerKey类型，是一个内部接口，需要动态代理来实现，最终是为了调用newInstance方法
 		Object key = KEY_FACTORY.newInstance((superclass != null) ? superclass.getName() : null,
 				ReflectUtils.getNames(interfaces),
 				filter == ALL_ZERO ? null : new WeakCacheKey<CallbackFilter>(filter),
@@ -568,7 +571,9 @@ public class Enhancer extends AbstractClassGenerator {
 				useFactory,
 				interceptDuringConstruction,
 				serialVersionUID);
+		// 设置当前enhancer的代理类的key标识
 		this.currentKey = key;
+		// 调用父类即AbstractClassGenerator的创建代理类
 		Object result = super.create(key);
 		return result;
 	}
@@ -654,21 +659,30 @@ public class Enhancer extends AbstractClassGenerator {
 	}
 
 	public void generateClass(ClassVisitor v) throws Exception {
+		// 声明需代理的类或者接口
 		Class sc = (superclass == null) ? Object.class : superclass;
 
+		// 检查final类无法被继承
 		if (TypeUtils.isFinal(sc.getModifiers()))
 			throw new IllegalArgumentException("Cannot subclass final class " + sc.getName());
+		// 找到该类所有声明了的构造函数
 		List constructors = new ArrayList(Arrays.asList(sc.getDeclaredConstructors()));
+		// 去掉private之类的不能被继承的构造函数
 		filterConstructors(sc, constructors);
 
 		// Order is very important: must add superclass, then
 		// its superclass chain, then each interface and
 		// its superinterfaces.
+		// 声明代理类方法集合
 		List actualMethods = new ArrayList();
+		// 声明代理接口接口方法集合
 		List interfaceMethods = new ArrayList();
+		// 声明所有必须为public的方法集合  这儿主要是代理接口接口的方法
 		final Set forcePublic = new HashSet();
+		// 即通过传入的代理类,代理接口，遍历所有的方法并放入对应的集合
 		getMethods(sc, interfaces, actualMethods, interfaceMethods, forcePublic);
 
+		// 对所有代理类方法修饰符做处理
 		List methods = CollectionUtils.transform(actualMethods, new Transformer() {
 			public Object transform(Object value) {
 				Method method = (Method) value;
@@ -684,6 +698,7 @@ public class Enhancer extends AbstractClassGenerator {
 			}
 		});
 
+		// 创建类写入器
 		ClassEmitter e = new ClassEmitter(v);
 		if (currentData == null) {
 			e.begin_class(Constants.V1_8,
