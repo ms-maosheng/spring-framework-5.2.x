@@ -100,8 +100,10 @@ public class ProxyCreatorSupport extends AdvisedSupport {
 	 */
 	protected final synchronized AopProxy createAopProxy() {
 		if (!this.active) {
+			// 监听调用AdvisedSupportListener实现类的activated方法
 			activate();
 		}
+		// 通过AopProxyFactory获得AopProxy，这个AopProxyFactory是在初始化函数中定义的，使用的是DefaultAopProxyFactory
 		return getAopProxyFactory().createAopProxy(this);
 	}
 

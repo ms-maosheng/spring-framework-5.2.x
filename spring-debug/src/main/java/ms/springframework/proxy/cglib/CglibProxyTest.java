@@ -2,18 +2,27 @@ package ms.springframework.proxy.cglib;
 
 import org.springframework.cglib.core.DebuggingClassWriter;
 import org.springframework.cglib.proxy.Enhancer;
+import org.springframework.cglib.proxy.MethodInterceptor;
+import org.springframework.cglib.proxy.MethodProxy;
+
+import java.lang.reflect.Method;
 
 public class CglibProxyTest {
     public static void main(String[] args) {
         // 动态代理创建的class文件存储到本地
-        System.setProperty(DebuggingClassWriter.DEBUG_LOCATION_PROPERTY,"d:\\code");
+        System.setProperty(DebuggingClassWriter.DEBUG_LOCATION_PROPERTY,"/Volumes/Macintosh HD - 数据/develop/workspacestudy/spring-framework-5.2.x/com/cglib/proxy");
         // 通过cglib动态代理获取代理对象的过程，创建调用的对象
 		// 在后续创建过程中EnhanceKey的对象，所以在进行enhancer对象创建的时候需要把EnhancerKey（newInstance）对象准备好,恰好这个对象也需要动态代理来生成
         Enhancer enhancer = new Enhancer();
         //设置enhancer对象的父类
         enhancer.setSuperclass(MyCalculator.class);
         //设置enhancer的回调对象
-        enhancer.setCallback(new MyCglib());
+        enhancer.setCallback(new MethodInterceptor() {
+			@Override
+			public Object intercept(Object o, Method method, Object[] objects, MethodProxy methodProxy) throws Throwable {
+				return methodProxy.invokeSuper(o, objects);
+			}
+		});
         //创建代理对象
         MyCalculator myCalculator = (MyCalculator) enhancer.create();
         //通过代理对象调用目标方法

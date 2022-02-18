@@ -310,7 +310,9 @@ abstract public class AbstractClassGenerator<T> implements ClassGenerator {
 		try {
 			// 获取到当前生成器的类加载器
 			ClassLoader loader = getClassLoader();
-			// 当前类加载器对应的缓存  缓存key为类加载器，缓存的value为ClassLoaderData，可以理解为一个缓存对象，只不过此缓存对象中包含的是具体的业务逻辑处理过程，有两个function的函数式接口，一个是返回gen.key,对应的名称叫GET_KEY,还有一个是为了创建具体的class，名字叫做load
+			// 当前类加载器对应的缓存  缓存key为类加载器，value为ClassLoaderData，
+			// ClassLoaderData是一个缓存对象，包含的是具体的业务逻辑处理过程，
+			// 有两个function的函数式接口，一个是返回gen.key,对应的名称叫GET_KEY,还有一个是为了创建具体的class，名字叫做load
 			Map<ClassLoader, ClassLoaderData> cache = CACHE;
 			// 先从缓存中获取下当前类加载器所有加载过的类
 			ClassLoaderData data = cache.get(loader);
