@@ -44,6 +44,8 @@ public class DefaultAdvisorAdapterRegistry implements AdvisorAdapterRegistry, Se
 
 
 	/**
+	 * 将存在的advice实现的adapter加入进来
+	 * 
 	 * Create a new DefaultAdvisorAdapterRegistry, registering well-known adapters.
 	 */
 	public DefaultAdvisorAdapterRegistry() {

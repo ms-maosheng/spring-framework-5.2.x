@@ -107,10 +107,12 @@ public class ProxyProcessorSupport extends ProxyConfig implements Ordered, BeanC
 		for (Class<?> ifc : targetInterfaces) {
 			if (!isConfigurationCallbackInterface(ifc) && !isInternalLanguageInterface(ifc) &&
 					ifc.getMethods().length > 0) {
+				// 用jdk代理
 				hasReasonableProxyInterface = true;
 				break;
 			}
 		}
+		// 有接口
 		if (hasReasonableProxyInterface) {
 			// Must allow for introductions; can't just set interfaces to the target's interfaces only.
 			for (Class<?> ifc : targetInterfaces) {
@@ -118,6 +120,7 @@ public class ProxyProcessorSupport extends ProxyConfig implements Ordered, BeanC
 			}
 		}
 		else {
+			// 没有接口设置true
 			proxyFactory.setProxyTargetClass(true);
 		}
 	}

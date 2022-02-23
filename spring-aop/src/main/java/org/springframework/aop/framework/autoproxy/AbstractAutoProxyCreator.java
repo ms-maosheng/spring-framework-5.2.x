@@ -347,8 +347,8 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		if (Boolean.FALSE.equals(this.advisedBeans.get(cacheKey))) {
 			return bean;
 		}
-		// 这里isInfrastructureClass()用于判断当前bean是否为Spring系统自带的bean，自带的bean是
-		// 不用进行代理的；shouldSkip()则用于判断当前bean是否应该被略过
+		// 这里isInfrastructureClass()用于判断当前bean是否为Spring系统自带的bean，自带的bean是不用进行代理的；
+		// shouldSkip()则用于判断当前bean是否应该被略过
 		if (isInfrastructureClass(bean.getClass()) || shouldSkip(bean.getClass(), beanName)) {
 			// 对当前bean进行缓存
 			this.advisedBeans.put(cacheKey, Boolean.FALSE);

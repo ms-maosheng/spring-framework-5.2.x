@@ -527,6 +527,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			// 给BeanPostProcessors一个机会来返回代理来替代真正的实例，
 			// 应用实例化前的前置处理器,用户自定义动态代理的方式，针对于当前的被代理类需要经过标准的代理流程来创建对象
 			// 提供一个通过BeanPostProcessors创建代理对象替换实例的扩展方式，应用实例化前的前置处理器
+			// Spring会通过AbstractAutoCreator创建动态代理基础类
 			Object bean = resolveBeforeInstantiation(beanName, mbdToUse);
 			if (bean != null) {
 				return bean;

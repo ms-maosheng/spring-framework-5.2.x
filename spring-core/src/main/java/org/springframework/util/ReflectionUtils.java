@@ -571,7 +571,7 @@ public abstract class ReflectionUtils {
 		// 如果(method不是public或者method的声明类不是public)且method不可访问
 		if ((!Modifier.isPublic(method.getModifiers()) ||
 				!Modifier.isPublic(method.getDeclaringClass().getModifiers())) && !method.isAccessible()) {
-			// 设置methid为可访问
+			// 设置method为可访问
 			method.setAccessible(true);
 		}
 	}

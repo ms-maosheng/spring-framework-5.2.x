@@ -379,19 +379,26 @@ public abstract class AbstractAspectJAdvice implements Advice, AspectJPrecedence
 	 */
 	public final synchronized void calculateArgumentBindings() {
 		// The simple case... nothing to bind.
+		// 如果已经进行过参数绑定了或者通知方法中没有参数
 		if (this.argumentsIntrospected || this.parameterTypes.length == 0) {
 			return;
 		}
 
 		int numUnboundArgs = this.parameterTypes.length;
+		// 通知方法参数类型
 		Class<?>[] parameterTypes = this.aspectJAdviceMethod.getParameterTypes();
-		if (maybeBindJoinPoint(parameterTypes[0]) || maybeBindProceedingJoinPoint(parameterTypes[0]) ||
+		// 如果第一个参数是JoinPoint或者ProceedingJoinPoint
+		if (maybeBindJoinPoint(parameterTypes[0]) ||
+				// 这个方法中还有一个校验 即只有在环绕通知中第一个参数类型才能是ProceedingJoinPoint
+				maybeBindProceedingJoinPoint(parameterTypes[0]) ||
+				// 如果第一个参数是JoinPoint.StaticPart
 				maybeBindJoinPointStaticPart(parameterTypes[0])) {
 			numUnboundArgs--;
 		}
 
 		if (numUnboundArgs > 0) {
 			// need to bind arguments by name as returned from the pointcut match
+			// 进行参数绑定
 			bindArgumentsByName(numUnboundArgs);
 		}
 
@@ -567,6 +574,7 @@ public abstract class AbstractAspectJAdvice implements Advice, AspectJPrecedence
 		Object[] adviceInvocationArgs = new Object[this.parameterTypes.length];
 		int numBound = 0;
 
+		// this.joinPointArgumentIndex默认值是 -1 重新赋值是在calculateArgumentBindings中进行的
 		if (this.joinPointArgumentIndex != -1) {
 			adviceInvocationArgs[this.joinPointArgumentIndex] = jp;
 			numBound++;
@@ -575,7 +583,8 @@ public abstract class AbstractAspectJAdvice implements Advice, AspectJPrecedence
 			adviceInvocationArgs[this.joinPointStaticPartArgumentIndex] = jp.getStaticPart();
 			numBound++;
 		}
-
+		// 这里主要是取通知方法中的参数类型 是除了 JoinPoint和ProceedingJoinPoint参数之外的参数
+		// 如异常通知参数 返回通知参数
 		if (!CollectionUtils.isEmpty(this.argumentBindings)) {
 			// binding from pointcut match
 			if (jpMatch != null) {
@@ -588,12 +597,14 @@ public abstract class AbstractAspectJAdvice implements Advice, AspectJPrecedence
 				}
 			}
 			// binding from returning clause
+			// 后置返回通知参数
 			if (this.returningName != null) {
 				Integer index = this.argumentBindings.get(this.returningName);
 				adviceInvocationArgs[index] = returnValue;
 				numBound++;
 			}
 			// binding from thrown exception
+			// 异常通知参数
 			if (this.throwingName != null) {
 				Integer index = this.argumentBindings.get(this.throwingName);
 				adviceInvocationArgs[index] = ex;
@@ -635,12 +646,15 @@ public abstract class AbstractAspectJAdvice implements Advice, AspectJPrecedence
 
 	protected Object invokeAdviceMethodWithGivenArgs(Object[] args) throws Throwable {
 		Object[] actualArgs = args;
+		// 判断通知方法是否有参数
 		if (this.aspectJAdviceMethod.getParameterCount() == 0) {
 			actualArgs = null;
 		}
 		try {
 			ReflectionUtils.makeAccessible(this.aspectJAdviceMethod);
 			// TODO AopUtils.invokeJoinpointUsingReflection
+			// 反射调用通知方法
+			// this.aspectInstanceFactory.getAspectInstance()获取的是切面的实例
 			return this.aspectJAdviceMethod.invoke(this.aspectInstanceFactory.getAspectInstance(), actualArgs);
 		}
 		catch (IllegalArgumentException ex) {

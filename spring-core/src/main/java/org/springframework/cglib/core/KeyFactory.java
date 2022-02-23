@@ -166,7 +166,7 @@ abstract public class KeyFactory {
 
 	public static KeyFactory create(ClassLoader loader, Class keyInterface, KeyFactoryCustomizer customizer,
 			List<KeyFactoryCustomizer> next) {
-		// 创建一个最简易的代理类生成器 只能生成HashCode equals toString newInstance方法
+		// 创建一个最简易的代理类生成器 只能生成hashCode equals toString newInstance方法
 		Generator gen = new Generator();
 		// 设置接口为enhancerKey类型
 		gen.setInterface(keyInterface);
