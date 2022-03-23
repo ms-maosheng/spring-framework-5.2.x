@@ -7,6 +7,8 @@ dependencies {
     compile(project(":spring-core"))
     compile(project(":spring-tx"))
     compile(project(":spring-aop"))
+    compile(project(":spring-jdbc"))
+    compile("com.alibaba:druid:1.2.4")
     compile(project(":spring-aspects"))
     optional(project(":spring-context"))  // for JndiDataSourceLookup
     optional("javax.transaction:javax.transaction-api")
