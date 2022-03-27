@@ -20,7 +20,7 @@ public class BookDao {
      * @param price
      */
     public void updateBalance(String userName,int price){
-        String sql = "update account set balance=balance-? where username=?";
+        String sql = "update account set balance = balance - ? where username=?";
         jdbcTemplate.update(sql,price,userName);
     }
 
@@ -39,7 +39,7 @@ public class BookDao {
      * @param id
      */
     public void updateStock(int id){
-        String sql = "update book_stock set stock=stock-1 where id=?";
+        String sql = "update book_stock set stock = stock-1 where id=?";
         jdbcTemplate.update(sql,id);
     }
 }

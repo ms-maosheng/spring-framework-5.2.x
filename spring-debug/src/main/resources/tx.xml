@@ -17,14 +17,14 @@
     <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
         <property name="dataSource" ref="dataSource"></property>
     </bean>
-    <bean id="bookService" class="com.mashibing.tx.xml.service.BookService">
+    <bean id="bookService" class="ms.springframework.tx.xml.service.BookService">
         <property name="bookDao" ref="bookDao"></property>
     </bean>
-    <bean id="bookDao" class="com.mashibing.tx.xml.dao.BookDao">
+    <bean id="bookDao" class="ms.springframework.tx.xml.dao.BookDao">
         <property name="jdbcTemplate" ref="jdbcTemplate"></property>
     </bean>
     <aop:config>
-        <aop:pointcut id="txPoint" expression="execution(* com.mashibing.tx.xml.*.*.*(..))"/>
+        <aop:pointcut id="txPoint" expression="execution(* com.ms.springframework.tx.xml.*.*.*(..))"/>
         <aop:advisor advice-ref="myAdvice" pointcut-ref="txPoint"></aop:advisor>
     </aop:config>
     <tx:advice id="myAdvice" transaction-manager="transactionManager">

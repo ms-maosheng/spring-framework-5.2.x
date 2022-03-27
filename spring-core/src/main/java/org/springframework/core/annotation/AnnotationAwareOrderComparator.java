@@ -108,6 +108,7 @@ public class AnnotationAwareOrderComparator extends OrderComparator {
 	 */
 	public static void sort(List<?> list) {
 		if (list.size() > 1) {
+			// 使用默认的AnnotationAwareOrderComparator进行排序
 			list.sort(INSTANCE);
 		}
 	}

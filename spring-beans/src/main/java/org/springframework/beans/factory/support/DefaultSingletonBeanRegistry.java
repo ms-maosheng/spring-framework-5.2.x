@@ -206,7 +206,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	@Override
 	@Nullable
 	public Object getSingleton(String beanName) {
-		// allowEarlyReference=true设置表示允许早起依赖,一二级缓存都没有的情况会通过三级缓存创建
+		// allowEarlyReference=true设置表示允许早起依赖, 一二级缓存都没有的情况会通过三级缓存创建
 		return getSingleton(beanName, true);
 	}
 
@@ -220,7 +220,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 * @param allowEarlyReference whether early references should be created or not
 	 * @return the registered singleton object, or {@code null} if none found
 	 */
-	/*@Nullable
+	@Nullable
 	protected Object getSingleton(String beanName, boolean allowEarlyReference) {
 		// Quick check for existing instance without full singleton lock
 		// 从单例对象缓存中获取beanName对应的单例对象
@@ -255,12 +255,12 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 			}
 		}
 		return singletonObject;
-	}*/
+	}
 
 	/**
 	 * 不使用动态代理的情况去除三级缓存
 	 */
-	@Nullable
+	/*@Nullable
 	public Object getSingleton(String beanName, boolean allowEarlyReference){
 		Object singletonObject = singletonObjects.get(beanName);
 		if(singletonObject == null && isSingletonCurrentlyInCreation(beanName)){
@@ -268,7 +268,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 		}
 		return singletonObject;
 		
-	}
+	}*/
 
 	/**
 	 * Return the (raw) singleton object registered under the given name,
@@ -436,7 +436,9 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 * @see #isSingletonCurrentlyInCreation
 	 */
 	protected void beforeSingletonCreation(String beanName) {
+		// 如果当前创建的beanName不属于排除列表，并且将beanName从当前正在创建的bean名称列表添加失败
 		if (!this.inCreationCheckExclusions.contains(beanName) && !this.singletonsCurrentlyInCreation.add(beanName)) {
+			// 抛异常
 			throw new BeanCurrentlyInCreationException(beanName);
 		}
 	}
@@ -450,7 +452,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 * @see #isSingletonCurrentlyInCreation
 	 */
 	protected void afterSingletonCreation(String beanName) {
-		// 如果当前创建的beanName不属于排除列表，并且将beanName从当前正在创建的bean名称列表失败
+		// 如果当前创建的beanName不属于排除列表，并且将beanName从当前正在创建的bean名称列表移除失败
 		if (!this.inCreationCheckExclusions.contains(beanName) && !this.singletonsCurrentlyInCreation.remove(beanName)) {
 			// 抛异常：单例'beanName'不是当前正在创建的
 			throw new IllegalStateException("Singleton '" + beanName + "' isn't currently in creation");

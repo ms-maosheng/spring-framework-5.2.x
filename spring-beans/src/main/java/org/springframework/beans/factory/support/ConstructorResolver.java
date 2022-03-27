@@ -616,7 +616,8 @@ class ConstructorResolver {
 				}
 			}
 			// 如果有多个工厂方法的话进行排序操作
-			if (candidates.size() > 1) {  // explicitly skip immutable singletonList
+			if (candidates.size() > 1) {  
+				// explicitly skip immutable singletonList
 				candidates.sort(AutowireUtils.EXECUTABLE_COMPARATOR);
 			}
 			// ConstructorArgumentValues：构造函数参数值的Holder,通常作为BeanDefinition的一部分,支持构造函数参数列表中特定索引的值
