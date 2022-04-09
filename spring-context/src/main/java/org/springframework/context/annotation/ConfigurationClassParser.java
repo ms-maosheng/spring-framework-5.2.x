@@ -265,7 +265,6 @@ class ConfigurationClassParser {
 		// 处理配置类，由于配置类可能存在父类(若父类的全类名是以java开头的，则除外)，所有需要将configClass变成sourceClass去解析，然后返回sourceClass的父类。
 		// 如果此时父类为空，则不会进行while循环去解析，如果父类不为空，则会循环的去解析父类
 		// SourceClass的意义：简单的包装类，目的是为了以统一的方式去处理带有注解的类，不管这些类是如何加载的
-		// 如果无法理解，可以把它当做一个黑盒，不会影响看spring源码的主流程
 		SourceClass sourceClass = asSourceClass(configClass, filter);
 		do {
 			// 解析各种注解

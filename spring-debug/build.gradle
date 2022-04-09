@@ -10,6 +10,7 @@ dependencies {
     compile(project(":spring-jdbc"))
     compile("com.alibaba:druid:1.2.4")
     compile(project(":spring-aspects"))
+    compile("mysql:mysql-connector-java:5.1.48")
     optional(project(":spring-context"))  // for JndiDataSourceLookup
     optional("javax.transaction:javax.transaction-api")
     optional("org.hsqldb:hsqldb")
