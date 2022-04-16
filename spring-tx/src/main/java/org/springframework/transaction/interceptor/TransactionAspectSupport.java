@@ -335,7 +335,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 		TransactionAttributeSource tas = getTransactionAttributeSource();
 		// 通过事务属性源对象获取到当前方法的事务属性信息
 		final TransactionAttribute txAttr = (tas != null ? tas.getTransactionAttribute(method, targetClass) : null);
-		// 获取我们配置的事务管理器对象
+		// 获取配置的事务管理器对象
 		final TransactionManager tm = determineTransactionManager(txAttr);
 
 		if (this.reactiveAdapterRegistry != null && tm instanceof ReactiveTransactionManager) {

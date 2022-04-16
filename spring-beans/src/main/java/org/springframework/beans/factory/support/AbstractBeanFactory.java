@@ -394,6 +394,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 							throw ex;
 						}
 					});
+					// 实现了FactoryBean接口的对象，需要获取具体的对象的时候就需要此方法来进行获取了
 					bean = getObjectForBeanInstance(sharedInstance, name, beanName, mbd);
 				}
 				// 原型模式bean的处理
