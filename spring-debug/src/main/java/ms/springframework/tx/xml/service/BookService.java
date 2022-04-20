@@ -14,11 +14,7 @@ public class BookService {
         this.bookDao = bookDao;
     }
 
-    /**
-     * 结账：传入哪个用户买了哪本书
-     * @param username
-     * @param id
-     */
+    
     public void checkout(String username,int id){
 
         try {
