@@ -30,7 +30,8 @@
     <tx:advice id="myAdvice" transaction-manager="transactionManager">
         <tx:attributes>
             <tx:method name="checkout" propagation="REQUIRED" />
-            <tx:method name="updateStock" propagation="REQUIRES_NEW" />
+            <tx:method name="updateStock" propagation="NESTED" />
         </tx:attributes>
     </tx:advice>
+	<context:component-scan base-package="ms.springframework.tx"></context:component-scan>
 </beans>

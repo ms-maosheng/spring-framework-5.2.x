@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,8 @@ import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 
 /**
+ * 此类是Configuration配置类的工具类，
+ *
  * Utilities for identifying {@link Configuration} classes.
  *
  * @author Chris Beams
@@ -51,19 +53,24 @@ import org.springframework.stereotype.Component;
  */
 abstract class ConfigurationClassUtils {
 
+	// Configuration class如果是@Configuration注解标注的类，那么将属性标注为full
 	public static final String CONFIGURATION_CLASS_FULL = "full";
 
+	// 非@Configuration注解标注的类，那么将属性标注如lite
 	public static final String CONFIGURATION_CLASS_LITE = "lite";
 
+	// org.springframework.context.annotation.ConfigurationClassPostProcessor.configurationClass作为属性配置类型标记属性的key
 	public static final String CONFIGURATION_CLASS_ATTRIBUTE =
 			Conventions.getQualifiedAttributeName(ConfigurationClassPostProcessor.class, "configurationClass");
 
+	// org.springframework.context.annotation.ConfigurationClassPostProcessor.order配置属性配置类排序的属性key
 	private static final String ORDER_ATTRIBUTE =
 			Conventions.getQualifiedAttributeName(ConfigurationClassPostProcessor.class, "order");
 
 
 	private static final Log logger = LogFactory.getLog(ConfigurationClassUtils.class);
 
+	// 定义set集合，用于存储标注配置类的注解
 	private static final Set<String> candidateIndicators = new HashSet<>(8);
 
 	static {
@@ -75,6 +82,9 @@ abstract class ConfigurationClassUtils {
 
 
 	/**
+	 * 检查当前给定的beanDefinition中是否是一个配置类的候选者，
+	 * 判断在嵌套的关系中是否包含配置类或者组件类或者自动注册进去的，并做相应的标记
+	 *
 	 * Check whether the given bean definition is a candidate for a configuration class
 	 * (or a nested component class declared within a configuration/component class,
 	 * to be auto-registered as well), and mark it accordingly.

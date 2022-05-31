@@ -515,7 +515,7 @@ class ConfigurationClassParser {
 			try {
 				// 处理属性值的占位符
 				String resolvedLocation = this.environment.resolveRequiredPlaceholders(location);
-				// 讲指定位置的资源转换成resource对象
+				// 将指定位置的资源转换成resource对象
 				Resource resource = this.resourceLoader.getResource(resolvedLocation);
 				// 添加resource对象为属性资源
 				addPropertySource(factory.createPropertySource(name, new EncodedResource(resource, encoding)));

@@ -62,26 +62,26 @@ final class PostProcessorRegistrationDelegate {
 			ConfigurableListableBeanFactory beanFactory, List<BeanFactoryPostProcessor> beanFactoryPostProcessors) {
 
 		// Invoke BeanDefinitionRegistryPostProcessors first, if any.
-		//将已经执行过的BeanFactoryPostProcess存储在processedBeans防止重复执行
+		// 将已经执行过的BeanFactoryPostProcess存储在processedBeans防止重复执行
 		Set<String> processedBeans = new HashSet<>();
 		// 判断beanFactory是否是BeanDefinitionRegistry类型，此处为默认的DefaultListableFactory，实现了BeanDefinitionRegistry接口，为true
 		if (beanFactory instanceof BeanDefinitionRegistry) {
 			BeanDefinitionRegistry registry = (BeanDefinitionRegistry) beanFactory;
-			//BeanDefinitionRegistryPostProcessor是BeanFactoryPostProcessor的子集
-			//BeanFactoryPostProcessor主要针对的操作对象是BeanFactory BeanDefinitionRegistryPostProcessor主要针对的操作对象是BeanDefinition
-			//存放BeanFactoryPostProcessor的集合
+			// BeanDefinitionRegistryPostProcessor是BeanFactoryPostProcessor的子集
+			// BeanFactoryPostProcessor主要针对的操作对象是BeanFactory BeanDefinitionRegistryPostProcessor主要针对的操作对象是BeanDefinition
+			// 存放BeanFactoryPostProcessor的集合
 			List<BeanFactoryPostProcessor> regularPostProcessors = new ArrayList<>();
-			//存放BeanDefinitionRegistryPostProcessor的集合
+			// 存放BeanDefinitionRegistryPostProcessor的集合
 			List<BeanDefinitionRegistryPostProcessor> registryProcessors = new ArrayList<>();
-			//首先处理入参中的beanFactoryPostProcessors，遍历所有的beanFactoryPostProcessors
+			// 首先处理入参中的beanFactoryPostProcessors，遍历所有的beanFactoryPostProcessors
 			for (BeanFactoryPostProcessor postProcessor : beanFactoryPostProcessors) {
-				//如果是BeanDefinitionRegistryPostProcessor
+				// 如果是BeanDefinitionRegistryPostProcessor
 				if (postProcessor instanceof BeanDefinitionRegistryPostProcessor) {
 					BeanDefinitionRegistryPostProcessor registryProcessor =
 							(BeanDefinitionRegistryPostProcessor) postProcessor;
 					// 直接执行BeanDefinitionRegistryPostProcessor接口中的postProcessBeanDefinitionRegistry();
 					registryProcessor.postProcessBeanDefinitionRegistry(registry);
-					//添加到registryProcessors，后续统一执行postProcessBeanFactory方法
+					// 添加到registryProcessors，后续统一执行postProcessBeanFactory方法
 					registryProcessors.add(registryProcessor);
 				}
 				else {

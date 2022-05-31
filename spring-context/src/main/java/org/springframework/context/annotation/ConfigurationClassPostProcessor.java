@@ -66,6 +66,12 @@ import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 
 /**
+ * 此类是一个后置处理器的类，主要功能是参与BeanFactory的建造，主要功能如下
+ *   1、解析加了@Configuration的配置类
+ *   2、解析@ComponentScan扫描的包
+ *   3、解析@ComponentScans扫描的包
+ *   4、解析@Import注解
+ *
  * {@link BeanFactoryPostProcessor} used for bootstrapping processing of
  * {@link Configuration @Configuration} classes.
  *
@@ -88,6 +94,8 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 		PriorityOrdered, ResourceLoaderAware, BeanClassLoaderAware, EnvironmentAware {
 
 	/**
+	 * 使用类的全限定名作为bean的默认生成策略
+	 *
 	 * A {@code BeanNameGenerator} using fully qualified class names as default bean names.
 	 * <p>This default for configuration-level import purposes may be overridden through
 	 * {@link #setBeanNameGenerator}. Note that the default for component scanning purposes
@@ -128,12 +136,15 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 	@Nullable
 	private ConfigurationClassBeanDefinitionReader reader;
 
+	// 是否使用本地xml配置的beanNameGenerator生成器
 	private boolean localBeanNameGeneratorSet = false;
 
 	/* Using short class names as default bean names by default. */
+	// 使用短类名作为bean名称生成策略
 	private BeanNameGenerator componentScanBeanNameGenerator = AnnotationBeanNameGenerator.INSTANCE;
 
 	/* Using fully qualified class names as default bean names by default. */
+	// 使用类的全限定名作为bean默认生成策略
 	private BeanNameGenerator importBeanNameGenerator = IMPORT_BEAN_NAME_GENERATOR;
 
 
@@ -219,6 +230,8 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 
 
 	/**
+	 * 定位、加载、解析、注册相关注解
+	 *
 	 * Derive further bean definitions from the configuration classes in the registry.
 	 */
 	@Override
@@ -235,11 +248,14 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 		}
 		// 将马上要进行处理的registry对象的id值放到已经处理的集合对象中
 		this.registriesPostProcessed.add(registryId);
+
 		// 处理配置类的bean定义信息
 		processConfigBeanDefinitions(registry);
 	}
 
 	/**
+	 * 添加CGLIB增强处理及ImportAwareBeanPostProcessor后置处理类
+	 *
 	 * Prepare the Configuration classes for servicing bean requests at runtime
 	 * by replacing them with CGLIB-enhanced subclasses.
 	 */
@@ -262,6 +278,10 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 	}
 
 	/**
+	 * 构建和验证一个类是否被@Configuration修饰，并做相关的解析工作
+	 *
+	 * springboot的自动装配基于这个方法实现
+	 *
 	 * Build and validate a configuration model based on the registry of
 	 * {@link Configuration} classes.
 	 */
@@ -489,6 +509,13 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 			this.beanFactory = beanFactory;
 		}
 
+		/**
+		 * 如果配置类有Configuration注解，会进行动态代理，会实现EnhancedConfiguration接口，里面有个setBeanFactory接口方法，会传入beanFactory
+		 * @param pvs
+		 * @param bean
+		 * @param beanName
+		 * @return
+		 */
 		@Override
 		public PropertyValues postProcessProperties(@Nullable PropertyValues pvs, Object bean, String beanName) {
 			// Inject the BeanFactory before AutowiredAnnotationBeanPostProcessor's
@@ -499,6 +526,12 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 			return pvs;
 		}
 
+		/**
+		 * 如果是ImportAware类型的，就会设置bean的注解信息
+		 * @param bean
+		 * @param beanName
+		 * @return
+		 */
 		@Override
 		public Object postProcessBeforeInitialization(Object bean, String beanName) {
 			if (bean instanceof ImportAware) {
