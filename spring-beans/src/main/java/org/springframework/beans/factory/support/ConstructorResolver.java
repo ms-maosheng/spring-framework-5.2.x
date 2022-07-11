@@ -464,7 +464,7 @@ class ConstructorResolver {
 	public BeanWrapper instantiateUsingFactoryMethod(
 			String beanName, RootBeanDefinition mbd, @Nullable Object[] explicitArgs) {
 		// 新建一个BeanWrapperImp实例，用于封装使用工厂方法生成与beanName对应的Bean对象
-		BeanWrapperImpl bw = new BeanWrapperImpl();
+ 		BeanWrapperImpl bw = new BeanWrapperImpl();
 		// 初始化实例包装类
 		this.beanFactory.initBeanWrapper(bw);
 		// 获取工厂Bean对象，工厂Bean对象的类对象，确定工厂方法是否是静态

@@ -1,4 +1,4 @@
-package ms.springframework.tx.Annotation.dao;
+package ms.springframework.tx.annotation.dao;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;

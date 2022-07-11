@@ -297,7 +297,7 @@ class ConfigurationClassParser {
 		}
 
 		// Process any @PropertySource annotations
-		// 如果配置类上加了@PropertySource注解，那么就解析加载properties文件，并将属性添加到spring上下文中
+		// 如果配置类上加了@PropertySource注解，那么就解析加载properties文件，并将属性添加到环境对象中
 		for (AnnotationAttributes propertySource : AnnotationConfigUtils.attributesForRepeatable(
 				sourceClass.getMetadata(), PropertySources.class,
 				org.springframework.context.annotation.PropertySource.class)) {
@@ -325,8 +325,8 @@ class ConfigurationClassParser {
 				Set<BeanDefinitionHolder> scannedBeanDefinitions =
 						this.componentScanParser.parse(componentScan, sourceClass.getMetadata().getClassName());
 				// Check the set of scanned definitions for any further config classes and parse recursively if needed
-				// 通过上一步扫描包com.mashibing，有可能扫描出来的bean中可能也添加了ComponentScan或者ComponentScans注解.
-				//所以这里需要循环遍历一次，进行递归(parse)，继续解析，直到解析出的类上没有ComponentScan和ComponentScans
+				// 通过上一步扫描包，有可能扫描出来的bean中可能也添加了ComponentScan或者ComponentScans注解.
+				// 所以这里需要循环遍历一次，进行递归(parse)，继续解析，直到解析出的类上没有ComponentScan和ComponentScans
 				for (BeanDefinitionHolder holder : scannedBeanDefinitions) {
 					BeanDefinition bdCand = holder.getBeanDefinition().getOriginatingBeanDefinition();
 					if (bdCand == null) {
@@ -452,7 +452,10 @@ class ConfigurationClassParser {
 	 */
 	private Set<MethodMetadata> retrieveBeanMethodMetadata(SourceClass sourceClass) {
 		AnnotationMetadata original = sourceClass.getMetadata();
+		// 获取所有被@Bean修饰的方法
 		Set<MethodMetadata> beanMethods = original.getAnnotatedMethods(Bean.class.getName());
+
+		// 判断方法集合是否超过两个，并且类的元数据是StandardAnnotationMetadata实例，则从ASM内获取声明的方法顺序
 		if (beanMethods.size() > 1 && original instanceof StandardAnnotationMetadata) {
 			// Try reading the class file via ASM for deterministic declaration order...
 			// Unfortunately, the JVM's standard reflection returns methods in arbitrary
@@ -460,9 +463,11 @@ class ConfigurationClassParser {
 			try {
 				AnnotationMetadata asm =
 						this.metadataReaderFactory.getMetadataReader(original.getClassName()).getAnnotationMetadata();
+				// 获取所有被@Bean修饰的方法
 				Set<MethodMetadata> asmMethods = asm.getAnnotatedMethods(Bean.class.getName());
 				if (asmMethods.size() >= beanMethods.size()) {
 					Set<MethodMetadata> selectedMethods = new LinkedHashSet<>(asmMethods.size());
+					// 做了一遍过滤，将二进制class文件的方法与JVM反射的方法做一次对比，防止将非编程方法加入，保持与JVM反射获取方法一致，除了顺序。
 					for (MethodMetadata asmMethod : asmMethods) {
 						for (MethodMetadata beanMethod : beanMethods) {
 							if (beanMethod.getMethodName().equals(asmMethod.getMethodName())) {
@@ -534,13 +539,19 @@ class ConfigurationClassParser {
 		}
 	}
 
+	/**
+	 * 将属性添加到环境对象中
+	 * @param propertySource
+	 */
 	private void addPropertySource(PropertySource<?> propertySource) {
 		String name = propertySource.getName();
+		// 从environment中获取可以管理多个PropertySource的对象
 		MutablePropertySources propertySources = ((ConfigurableEnvironment) this.environment).getPropertySources();
-
+		// 处理已经存在的属性源
 		if (this.propertySourceNames.contains(name)) {
 			// We've already added a version, we need to extend it
 			PropertySource<?> existing = propertySources.get(name);
+			// 如果已经存在属性源，进行属性的合并，通过CompositePropertySource对象完成
 			if (existing != null) {
 				PropertySource<?> newSource = (propertySource instanceof ResourcePropertySource ?
 						((ResourcePropertySource) propertySource).withResourceName() : propertySource);
@@ -560,13 +571,16 @@ class ConfigurationClassParser {
 			}
 		}
 
+		// 如果属性源不存在则直接添加到最后
 		if (this.propertySourceNames.isEmpty()) {
 			propertySources.addLast(propertySource);
 		}
 		else {
+			// 此时有属性源，则添加到最后一个元素的前面
 			String firstProcessed = this.propertySourceNames.get(this.propertySourceNames.size() - 1);
 			propertySources.addBefore(firstProcessed, propertySource);
 		}
+		//最后将该属性源名称添加到名称列表里
 		this.propertySourceNames.add(name);
 	}
 
@@ -581,6 +595,7 @@ class ConfigurationClassParser {
 		Set<SourceClass> visited = new LinkedHashSet<>();
 		// 收集@Import注解的类
 		collectImports(sourceClass, imports, visited);
+		// 返回所有@Import的类
 		return imports;
 	}
 
@@ -601,10 +616,12 @@ class ConfigurationClassParser {
 			throws IOException {
 
 		if (visited.add(sourceClass)) {
+			// 遍历当前资源类所有的注解
 			for (SourceClass annotation : sourceClass.getAnnotations()) {
 				String annName = annotation.getMetadata().getClassName();
-				// 递归处理其他可能包含@Import的注解类
+				// 如果当前不是@Import，递归处理其他可能包含@Import的注解类
 				if (!annName.equals(Import.class.getName())) {
+					// 递归调用
 					collectImports(annotation, imports, visited);
 				}
 			}

@@ -53,10 +53,12 @@ import org.springframework.stereotype.Component;
  */
 abstract class ConfigurationClassUtils {
 
-	// Configuration class如果是@Configuration注解标注的类，那么将属性标注为full
+	// Configuration class如果是@Configuration注解标注的类，并且proxyBeanMethods指定为true，那么将属性标注为full
+	// 将配置类标记为full模式，当前配置类的@Bean注解会被代理，每次都会返回同一个对象
 	public static final String CONFIGURATION_CLASS_FULL = "full";
 
-	// 非@Configuration注解标注的类，那么将属性标注如lite
+	// 非@Configuration注解标注的类或proxyBeanMethods指定为false，那么将属性标注如lite
+	// 将配置类标记为lite模式，当前配置类的@Bean注解不会被代理，会永远重新创建对象
 	public static final String CONFIGURATION_CLASS_LITE = "lite";
 
 	// org.springframework.context.annotation.ConfigurationClassPostProcessor.configurationClass作为属性配置类型标记属性的key
@@ -151,7 +153,7 @@ abstract class ConfigurationClassUtils {
 		if (config != null && !Boolean.FALSE.equals(config.get("proxyBeanMethods"))) {
 			beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_FULL);
 		}
-		// 如果bean被@configuration注解标注，且被注解@Component，@ComponentScan、@Import、@ImportResource或者@Bean标记的方法，则将bean定义标记为lite
+		// 如果bean被@configuration注解标注，或被注解@Component，@ComponentScan、@Import、@ImportResource或者@Bean标记的方法，则将bean定义标记为lite
 		else if (config != null || isConfigurationCandidate(metadata)) {
 			beanDef.setAttribute(CONFIGURATION_CLASS_ATTRIBUTE, CONFIGURATION_CLASS_LITE);
 		}

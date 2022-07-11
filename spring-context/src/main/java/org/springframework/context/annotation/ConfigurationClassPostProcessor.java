@@ -267,6 +267,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 					"postProcessBeanFactory already called on this post-processor against " + beanFactory);
 		}
 		this.factoriesPostProcessed.add(factoryId);
+		// 校验当前processConfigBeanDefinitions是否执行过，如果没有执行重新执行一次
 		if (!this.registriesPostProcessed.contains(factoryId)) {
 			// BeanDefinitionRegistryPostProcessor hook apparently not supported...
 			// Simply call processConfigurationClasses lazily at this point then.
@@ -279,8 +280,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 
 	/**
 	 * 构建和验证一个类是否被@Configuration修饰，并做相关的解析工作
-	 *
-	 * springboot的自动装配基于这个方法实现
+	 * spring-boot自动装配
 	 *
 	 * Build and validate a configuration model based on the registry of
 	 * {@link Configuration} classes.
@@ -432,9 +432,11 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 	 * @see ConfigurationClassEnhancer
 	 */
 	public void enhanceConfigurationClasses(ConfigurableListableBeanFactory beanFactory) {
+		// 需要代理的集合
 		Map<String, AbstractBeanDefinition> configBeanDefs = new LinkedHashMap<>();
 		for (String beanName : beanFactory.getBeanDefinitionNames()) {
 			BeanDefinition beanDef = beanFactory.getBeanDefinition(beanName);
+			// 获取configurationClass属性 根据full模式模式和lite决定是否动态代理
 			Object configClassAttr = beanDef.getAttribute(ConfigurationClassUtils.CONFIGURATION_CLASS_ATTRIBUTE);
 			AnnotationMetadata annotationMetadata = null;
 			MethodMetadata methodMetadata = null;
@@ -449,6 +451,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 				// or component class without @Bean methods.
 				AbstractBeanDefinition abd = (AbstractBeanDefinition) beanDef;
 				if (!abd.hasBeanClass()) {
+					// 当前beanDefinition是一个lite模式并且没有被@Bean注解修饰
 					boolean liteConfigurationCandidateWithoutBeanMethods =
 							(ConfigurationClassUtils.CONFIGURATION_CLASS_LITE.equals(configClassAttr) &&
 								annotationMetadata != null && !ConfigurationClassUtils.hasBeanMethods(annotationMetadata));
@@ -463,6 +466,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 					}
 				}
 			}
+			// 如果是full模式
 			if (ConfigurationClassUtils.CONFIGURATION_CLASS_FULL.equals(configClassAttr)) {
 				if (!(beanDef instanceof AbstractBeanDefinition)) {
 					throw new BeanDefinitionStoreException("Cannot enhance @Configuration bean definition '" +
@@ -474,6 +478,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 							"is a non-static @Bean method with a BeanDefinitionRegistryPostProcessor " +
 							"return type: Consider declaring such methods as 'static'.");
 				}
+				// 放到需要动态代理集合中
 				configBeanDefs.put(beanName, (AbstractBeanDefinition) beanDef);
 			}
 		}
@@ -489,12 +494,14 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 			beanDef.setAttribute(AutoProxyUtils.PRESERVE_TARGET_CLASS_ATTRIBUTE, Boolean.TRUE);
 			// Set enhanced subclass of the user-specified bean class
 			Class<?> configClass = beanDef.getBeanClass();
+			// 将配置类动态代理
 			Class<?> enhancedClass = enhancer.enhance(configClass, this.beanClassLoader);
 			if (configClass != enhancedClass) {
 				if (logger.isTraceEnabled()) {
 					logger.trace(String.format("Replacing bean definition '%s' existing class '%s' with " +
 							"enhanced class '%s'", entry.getKey(), configClass.getName(), enhancedClass.getName()));
 				}
+				// 成功代理后设置替换beanClass
 				beanDef.setBeanClass(enhancedClass);
 			}
 		}

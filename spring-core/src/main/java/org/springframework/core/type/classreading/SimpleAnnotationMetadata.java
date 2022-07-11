@@ -140,7 +140,9 @@ final class SimpleAnnotationMetadata implements AnnotationMetadata {
 	@Override
 	public Set<MethodMetadata> getAnnotatedMethods(String annotationName) {
 		Set<MethodMetadata> annotatedMethods = null;
+		// 获取当前bean的所有被注解修饰的方法
 		for (MethodMetadata annotatedMethod : this.annotatedMethods) {
+			// 根据入参的注解className筛选方法
 			if (annotatedMethod.isAnnotated(annotationName)) {
 				if (annotatedMethods == null) {
 					annotatedMethods = new LinkedHashSet<>(4);
@@ -148,6 +150,7 @@ final class SimpleAnnotationMetadata implements AnnotationMetadata {
 				annotatedMethods.add(annotatedMethod);
 			}
 		}
+		// 返回所有被指定注解修饰的注解方法
 		return annotatedMethods != null ? annotatedMethods : Collections.emptySet();
 	}
 

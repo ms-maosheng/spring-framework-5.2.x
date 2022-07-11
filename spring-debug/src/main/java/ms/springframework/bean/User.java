@@ -6,23 +6,13 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
-@Component
+/*@Component*/
 public class User {
 
 	private Integer id;
 	private String name;
 
-	@Autowired
-	private Persion persion;
-	
-	@PostConstruct
-	public void init(){
-		System.out.println("执行init方法。。。");
-	}
-	@PreDestroy
-	public void PreDestroy(){
-		System.out.println("执行PreDestroy方法。。。");
-	}
+
 
 	public Integer getId() {
 		return id;

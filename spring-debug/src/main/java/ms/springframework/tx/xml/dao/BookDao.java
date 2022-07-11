@@ -24,20 +24,18 @@ public class BookDao {
         jdbcTemplate.update(sql,price,userName);
     }
 
-    
+
     public int getPrice(int id){
         String sql = "select price from book where id=?";
         return jdbcTemplate.queryForObject(sql,Integer.class,id);
     }
 
-    
+
     public void updateStock(int id){
-    	
-			for(int i = 5; i > -1; i --){
-				System.out.println(10 / i);
-			}
-			String sql = "update book_stock set stock = stock-1 where id=?";
-			jdbcTemplate.update(sql,id);
-		
+        String sql = "update book_stock set stock = stock-1 where id=?";
+		for(int i = 5; i > -1; i--){
+			System.out.println(12/i);
+		}
+        jdbcTemplate.update(sql,id);
     }
 }

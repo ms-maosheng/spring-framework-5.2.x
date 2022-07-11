@@ -472,6 +472,8 @@ class CglibAopProxy implements AopProxy, Serializable {
 
 
 	/**
+	 * 拦截器被用来执行动态目标不需要创建方法执行器或者计算通知链
+	 *
 	 * Interceptor used to invoke a dynamic target without creating a method
 	 * invocation or evaluating an advice chain. (We know there was no advice
 	 * for this method.)

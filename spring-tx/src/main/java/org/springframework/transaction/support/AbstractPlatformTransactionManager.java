@@ -426,7 +426,7 @@ public abstract class AbstractPlatformTransactionManager implements PlatformTran
 			throw new IllegalTransactionStateException(
 					"Existing transaction found for transaction marked with propagation 'never'");
 		}
-		
+
 		// 判断当前的事务属性不支持事务,PROPAGATION_NOT_SUPPORTED,所以需要先挂起已经存在的事务
 		if (definition.getPropagationBehavior() == TransactionDefinition.PROPAGATION_NOT_SUPPORTED) {
 			if (debugEnabled) {
@@ -741,7 +741,7 @@ public abstract class AbstractPlatformTransactionManager implements PlatformTran
 			processRollback(defStatus, false);
 			return;
 		}
-		
+
 		// 设置了全局回滚
 		if (!shouldCommitOnGlobalRollbackOnly() && defStatus.isGlobalRollbackOnly()) {
 			if (defStatus.isDebug()) {
@@ -751,7 +751,6 @@ public abstract class AbstractPlatformTransactionManager implements PlatformTran
 			processRollback(defStatus, true);
 			return;
 		}
-
 		// 处理事务提交
 		processCommit(defStatus);
 	}
@@ -925,7 +924,7 @@ public abstract class AbstractPlatformTransactionManager implements PlatformTran
 				triggerAfterCompletion(status, TransactionSynchronization.STATUS_UNKNOWN);
 				throw ex;
 			}
-			
+
 			// 回滚完成后回调
 			triggerAfterCompletion(status, TransactionSynchronization.STATUS_ROLLED_BACK);
 
@@ -1067,7 +1066,7 @@ public abstract class AbstractPlatformTransactionManager implements PlatformTran
 			// 线程同步状态清除
 			TransactionSynchronizationManager.clear();
 		}
-		
+
 		// 如果是新事务的话，进行数据清除，线程的私有资源解绑，重置连接自动提交，隔离级别，是否只读，释放连接等
 		if (status.isNewTransaction()) {
 			doCleanupAfterCompletion(status.getTransaction());

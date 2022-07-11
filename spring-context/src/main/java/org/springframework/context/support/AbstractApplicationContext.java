@@ -743,7 +743,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * respecting explicit order if given.
 	 * <p>Must be called before singleton instantiation.
 	 */
-	protected void invokeBeanFactoryPostProcessors(ConfigurableListableBeanFactory beanFactory) {
+	protected void  invokeBeanFactoryPostProcessors(ConfigurableListableBeanFactory beanFactory) {
 		// 获取到当前应用程序上下文的beanFactoryPostProcessors变量的值
 		// 并且实例化调用执行所有已经注册的beanFactoryPostProcessor
 		// 默认情况下，通过getBeanFactoryPostProcessors()来获取已经注册的BFPP
@@ -887,18 +887,23 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 */
 	protected void registerListeners() {
 		// Register statically specified listeners first.
+		// 遍历应用程序中存在的监听器集合，并将对应的监听器添加到监听器的多路广播器中
 		for (ApplicationListener<?> listener : getApplicationListeners()) {
 			getApplicationEventMulticaster().addApplicationListener(listener);
 		}
 
 		// Do not initialize FactoryBeans here: We need to leave all regular beans
 		// uninitialized to let post-processors apply to them!
+		// 从容器中获取所有实现了ApplicationListener接口的bd的bdName
+		// 放入ApplicationListenerBeans集合中
 		String[] listenerBeanNames = getBeanNamesForType(ApplicationListener.class, true, false);
 		for (String listenerBeanName : listenerBeanNames) {
 			getApplicationEventMulticaster().addApplicationListenerBean(listenerBeanName);
+//			getApplicationEventMulticaster().addApplicationListener(this.getBean(listenerBeanName,ApplicationListener.class));
 		}
 
 		// Publish early application events now that we finally have a multicaster...
+		// 此处先发布早期的监听器集合
 		Set<ApplicationEvent> earlyEventsToProcess = this.earlyApplicationEvents;
 		this.earlyApplicationEvents = null;
 		if (!CollectionUtils.isEmpty(earlyEventsToProcess)) {
@@ -956,18 +961,30 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 */
 	protected void finishRefresh() {
 		// Clear context-level resource caches (such as ASM metadata from scanning).
+		// 清除上下文级别的资源缓存(如扫描的ASM元数据)
+		// 清空在资源加载器中的所有资源缓存
 		clearResourceCaches();
 
 		// Initialize lifecycle processor for this context.
+		// 为这个上下文初始化生命周期处理器
+		// 初始化LifecycleProcessor.如果上下文中找到'lifecycleProcessor'的LifecycleProcessor Bean对象，
+		// 则使用DefaultLifecycleProcessor
 		initLifecycleProcessor();
 
 		// Propagate refresh to lifecycle processor first.
+		// 首先将刷新传播到生命周期处理器
+		// 上下文刷新的通知，例如自动启动的组件
 		getLifecycleProcessor().onRefresh();
 
 		// Publish the final event.
+		// 发布最终事件
+		// 新建ContextRefreshedEvent事件对象，将其发布到所有监听器。
 		publishEvent(new ContextRefreshedEvent(this));
 
 		// Participate in LiveBeansView MBean, if active.
+		// 参与LiveBeansView MBean，如果是活动的
+		// LiveBeansView:Sping用于支持JMX 服务的类
+		// 注册当前上下文到LiveBeansView，以支持JMX服务
 		LiveBeansView.registerApplicationContext(this);
 	}
 

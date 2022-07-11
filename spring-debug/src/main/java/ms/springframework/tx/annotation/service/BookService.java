@@ -1,6 +1,6 @@
-package ms.springframework.tx.Annotation.service;
+package ms.springframework.tx.annotation.service;
 
-import ms.springframework.tx.Annotation.dao.BookDao;
+import ms.springframework.tx.annotation.dao.BookDao;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;

@@ -1,5 +1,6 @@
 package ms.springframework.tx.xml;
 
+import ms.springframework.bean.User;
 import ms.springframework.tx.xml.service.BookService;
 import org.springframework.cglib.core.DebuggingClassWriter;
 import org.springframework.context.ApplicationContext;

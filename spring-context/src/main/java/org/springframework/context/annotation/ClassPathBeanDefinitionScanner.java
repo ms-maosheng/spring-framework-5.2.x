@@ -16,7 +16,9 @@
 
 package org.springframework.context.annotation;
 
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
@@ -159,10 +161,11 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 	 * @since 4.3.6
 	 */
 	public ClassPathBeanDefinitionScanner(BeanDefinitionRegistry registry, boolean useDefaultFilters,
-										  Environment environment, @Nullable ResourceLoader resourceLoader) {
+			Environment environment, @Nullable ResourceLoader resourceLoader) {
 
 		Assert.notNull(registry, "BeanDefinitionRegistry must not be null");
 		this.registry = registry;
+
 		// 判断是否使用默认过滤器
 		if (useDefaultFilters) {
 			// 注册默认的filter
@@ -286,7 +289,7 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 				candidate.setScope(scopeMetadata.getScopeName());
 				// 使用beanName生成器来生成beanName
 				String beanName = this.beanNameGenerator.generateBeanName(candidate, this.registry);
-				
+
 				if (candidate instanceof AbstractBeanDefinition) {
 					// 处理beanDefinition对象，例如，此bean是否可以自动装配到其他bean中
 					postProcessBeanDefinition((AbstractBeanDefinition) candidate, beanName);
@@ -295,7 +298,7 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 					// 处理定义在目标类上的通用注解，包括@Lazy，@Primary，@DependsOn，@Role，@Description
 					AnnotationConfigUtils.processCommonDefinitionAnnotations((AnnotatedBeanDefinition) candidate);
 				}
-				
+
 				// 检查beanName是否已经注册过，如果注册过，检查是否兼容
 				if (checkCandidate(beanName, candidate)) {
 					// 将当前遍历bean的bean定义和beanName封装成BeanDefinitionHolder

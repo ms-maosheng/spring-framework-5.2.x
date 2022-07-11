@@ -1,7 +1,7 @@
-package ms.springframework.tx.Annotation;
+package ms.springframework.tx.annotation;
 
-import ms.springframework.tx.Annotation.config.TransactionConfig;
-import ms.springframework.tx.Annotation.service.BookService;
+import ms.springframework.tx.annotation.config.TransactionConfig;
+import ms.springframework.tx.annotation.service.BookService;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 public class TxAnnotationTest {
