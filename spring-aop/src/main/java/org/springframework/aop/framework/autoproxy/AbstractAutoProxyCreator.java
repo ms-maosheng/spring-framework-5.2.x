@@ -367,7 +367,7 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		if (specificInterceptors != DO_NOT_PROXY) {
 			// 对当前bean的代理状态进行缓存
 			this.advisedBeans.put(cacheKey, Boolean.TRUE);
-			// 根据获取到的Advices和Advisors为当前bean生成代理对象
+			// 根据获取到的Advices和Advisors为当前bean生成代理对
 			Object proxy = createProxy(
 					bean.getClass(), beanName, specificInterceptors, new SingletonTargetSource(bean));
 			// 缓存生成的代理bean的类型，并且返回生成的代理bean`

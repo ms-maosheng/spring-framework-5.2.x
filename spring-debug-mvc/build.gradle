@@ -1,0 +1,30 @@
+description = "Spring Expression Language (SpEL)"
+
+apply plugin: "kotlin"
+
+dependencies {
+    compile(project(":spring-beans"))
+    compile(project(":spring-core"))
+    compile(project(":spring-tx"))
+    compile(project(":spring-aop"))
+    compile(project(":spring-jdbc"))
+    compile(project(":spring-web"))
+    compile(project(":spring-webmvc"))
+    compile("com.alibaba:druid:1.2.4")
+    compile(project(":spring-aspects"))
+    compile("mysql:mysql-connector-java:5.1.48")
+    optional(project(":spring-context"))  // for JndiDataSourceLookup
+    optional("javax.transaction:javax.transaction-api")
+    optional("org.hsqldb:hsqldb")
+    optional("com.h2database:h2")
+    optional("org.apache.derby:derby")
+    optional("org.apache.derby:derbyclient")
+    optional("org.jetbrains.kotlin:kotlin-reflect")
+    optional("org.jetbrains.kotlin:kotlin-stdlib")
+    testCompile(testFixtures(project(":spring-beans")))
+    testCompile(testFixtures(project(":spring-core")))
+}
+
+
+
+

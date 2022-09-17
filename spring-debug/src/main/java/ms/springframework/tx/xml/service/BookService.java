@@ -1,7 +1,9 @@
 package ms.springframework.tx.xml.service;
 
 import ms.springframework.tx.xml.dao.BookDao;
+import org.springframework.stereotype.Component;
 
+@Component
 public class BookService {
 
     BookDao bookDao;

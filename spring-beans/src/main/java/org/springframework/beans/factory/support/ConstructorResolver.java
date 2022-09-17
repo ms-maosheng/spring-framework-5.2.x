@@ -65,6 +65,8 @@ import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
 
 /**
+ * 代理解析构造函数和工厂方法
+ *
  * Delegate for resolving constructors and factory methods.
  *
  * <p>Performs constructor resolution through argument matching.
@@ -354,7 +356,12 @@ class ConstructorResolver {
 						"(hint: specify index/type/name arguments for simple parameters to avoid type ambiguities): " +
 						ambiguousConstructors);
 			}
-
+			/**
+			 * 没有传入参与构造函数参数列表的参数时，对构造函数缓存到BeanDefinition中
+			 * 	1、缓存BeanDefinition进行实例化时使用的构造函数
+			 * 	2、缓存BeanDefinition代表的Bean的构造函数已解析完标识
+			 * 	3、缓存参与构造函数参数列表值的参数列表
+			 */
 			if (explicitArgs == null && argsHolderToUse != null) {
 				// 将解析的构造函数加入缓存
 				argsHolderToUse.storeCache(mbd, constructorToUse);
@@ -388,37 +395,58 @@ class ConstructorResolver {
 	}
 
 	/**
+	 * 如果可能，解析指定的beanDefinition中factory方法
+	 *
 	 * Resolve the factory method in the specified bean definition, if possible.
 	 * {@link RootBeanDefinition#getResolvedFactoryMethod()} can be checked for the result.
 	 * @param mbd the bean definition to check
 	 */
 	public void resolveFactoryMethodIfPossible(RootBeanDefinition mbd) {
+		// 定义用于引用工厂类对象的类对象
 		Class<?> factoryClass;
+		// 定义是否是静态标记
 		boolean isStatic;
+		// 如果mbd的FactoryBean名不为null
 		if (mbd.getFactoryBeanName() != null) {
+			// 使用beanFactory确定mbd的FactoryBean名的bean类型。为了确定其对象类型，默认让FactoryBean以初始化
 			factoryClass = this.beanFactory.getType(mbd.getFactoryBeanName());
+			// 静态标记设置为false，表示不是静态方法
 			isStatic = false;
 		}
 		else {
+			// 获取mbd包装好的Bean类
 			factoryClass = mbd.getBeanClass();
+			// 静态标记设置为true，表示是静态方法
 			isStatic = true;
 		}
+		// 如果factoryClass为null,抛出异常：无法解析工厂类
 		Assert.state(factoryClass != null, "Unresolvable factory class");
+		// 如果clazz是CGLIB生成的子类，则返回该子类的父类，否则直接返回要检查的类
 		factoryClass = ClassUtils.getUserClass(factoryClass);
 
+		// 根据mbd的是否允许访问非公共构造函数和方法标记【RootBeanDefinition.isNonPublicAccessAllowed】来获取factoryClass的所有候选方法
 		Method[] candidates = getCandidateMethods(factoryClass, mbd);
+		// 定义用于存储唯一方法对象的Method对象
 		Method uniqueCandidate = null;
+		// 遍历candidates
 		for (Method candidate : candidates) {
+			// 如果candidate的静态标记与静态标记相同 且 candidate有资格作为工厂方法
 			if (Modifier.isStatic(candidate.getModifiers()) == isStatic && mbd.isFactoryMethod(candidate)) {
+				// 如果uniqueCandidate还没有引用
 				if (uniqueCandidate == null) {
+					// 将uniqueCandidate引用该candidate
 					uniqueCandidate = candidate;
 				}
+				// 如果uniqueCandidate的参数类型数组与candidate的参数类型数组不一致
 				else if (isParamMismatch(uniqueCandidate, candidate)) {
+					// 取消uniqueCandidate的引用
 					uniqueCandidate = null;
+					// 跳出循环
 					break;
 				}
 			}
 		}
+		// 将mbd用于自省的唯一工厂方法候选的缓存引用上uniqueCandidate
 		mbd.factoryMethodToIntrospect = uniqueCandidate;
 	}
 
@@ -430,17 +458,24 @@ class ConstructorResolver {
 	}
 
 	/**
+	 * 根据mbd的是否允许访问非公共构造函数和方法标记【{@link RootBeanDefinition#isNonPublicAccessAllowed}】来获取factoryClass的所有候选方法
+	 *
 	 * Retrieve all candidate methods for the given class, considering
 	 * the {@link RootBeanDefinition#isNonPublicAccessAllowed()} flag.
 	 * Called as the starting point for factory method determination.
 	 */
 	private Method[] getCandidateMethods(Class<?> factoryClass, RootBeanDefinition mbd) {
+		// 如果有系统安全管理器
 		if (System.getSecurityManager() != null) {
+			// 使用特权方式执行:如果mbd允许访问非公共构造函数和方法，就返回factoryClass子类和其父类的所有声明方法，首先包括子类方法；
+			// 否则只获取factoryClass的public级别方法
 			return AccessController.doPrivileged((PrivilegedAction<Method[]>) () ->
 					(mbd.isNonPublicAccessAllowed() ?
-						ReflectionUtils.getAllDeclaredMethods(factoryClass) : factoryClass.getMethods()));
+							ReflectionUtils.getAllDeclaredMethods(factoryClass) : factoryClass.getMethods()));
 		}
 		else {
+			// 如果mbd允许访问非公共构造函数和方法，就返回factoryClass子类和其父类的所有声明方法，首先包括子类方法；
+			// 否则只获取factoryClass的public级别方法
 			return (mbd.isNonPublicAccessAllowed() ?
 					ReflectionUtils.getAllDeclaredMethods(factoryClass) : factoryClass.getMethods());
 		}
@@ -875,54 +910,84 @@ class ConstructorResolver {
 	private int resolveConstructorArguments(String beanName, RootBeanDefinition mbd, BeanWrapper bw,
 			ConstructorArgumentValues cargs, ConstructorArgumentValues resolvedValues) {
 
+		// 获取Bean工厂的类型转换器
 		TypeConverter customConverter = this.beanFactory.getCustomTypeConverter();
+		// 定义一个TypeConverter对象，如果有customConverter，就引用customConverter;否则引用bw
 		TypeConverter converter = (customConverter != null ? customConverter : bw);
+		// BeanDefinitionValueResolver:在bean工厂实现中使用Helper类，它将beanDefinition对象中包含的值解析为应用于
+		// 目标bean实例的实际值
+		// 新建一个BeanDefinitionValueResolver对象
 		BeanDefinitionValueResolver valueResolver =
 				new BeanDefinitionValueResolver(this.beanFactory, beanName, mbd, converter);
 
+		// 返回此实例中保存的参数值的数量，同时计算索引参数值和泛型参数值
+		// 获取cargs的参数值数量和泛型参数值数量作为 最小(索引参数值数+泛型参数值数)
 		int minNrOfArgs = cargs.getArgumentCount();
 
+		// ConstructorArgumentValues.ValueHolder：构造函数参数值的Holder,带有可选的type属性，指示实际构造函数参数的目标类型
+		// 遍历cargs所封装的索引参数值的Map，元素为entry(key=参数值的参数索引,value=ConstructorArgumentValues.ValueHolder对象)
 		for (Map.Entry<Integer, ConstructorArgumentValues.ValueHolder> entry : cargs.getIndexedArgumentValues().entrySet()) {
+			// 获取参数值的参数索引
 			int index = entry.getKey();
+			// 如果index小于0
 			if (index < 0) {
 				throw new BeanCreationException(mbd.getResourceDescription(), beanName,
 						"Invalid constructor argument index: " + index);
 			}
+			// 如果index大于最小参数值数量
 			if (index + 1 > minNrOfArgs) {
+				// minNrOfArgs就为index+1
 				minNrOfArgs = index + 1;
 			}
+			// 获取ConstructorArgumentValues.ValueHolder对象
 			ConstructorArgumentValues.ValueHolder valueHolder = entry.getValue();
+			// 如果valueHolder已经包含转换后的值
 			if (valueHolder.isConverted()) {
+				// 将index和valueHolder添加到resolvedValues所封装的索引参数值的Map中
 				resolvedValues.addIndexedArgumentValue(index, valueHolder);
 			}
 			else {
+				// 使用valueResolver解析出valueHolder实例的构造函数参数值所封装的对象
 				Object resolvedValue =
 						valueResolver.resolveValueIfNecessary("constructor argument", valueHolder.getValue());
+				// 使用valueHolder所封装的type,name属性以及解析出来的resolvedValue构造出一个ConstructorArgumentValues.ValueHolder对象
 				ConstructorArgumentValues.ValueHolder resolvedValueHolder =
 						new ConstructorArgumentValues.ValueHolder(resolvedValue, valueHolder.getType(), valueHolder.getName());
+				// 将valueHolder作为resolvedValueHolder的配置源对象设置到resolvedValueHolder中
 				resolvedValueHolder.setSource(valueHolder);
+				// 将index和valueHolder添加到resolvedValues所封装的索引参数值的Map中
 				resolvedValues.addIndexedArgumentValue(index, resolvedValueHolder);
 			}
 		}
 
+		// 遍历cargs的泛型参数值的列表,元素为ConstructorArgumentValues.ValueHolder对象
 		for (ConstructorArgumentValues.ValueHolder valueHolder : cargs.getGenericArgumentValues()) {
+			// 如果valueHolder已经包含转换后的值
 			if (valueHolder.isConverted()) {
+				// 将index和valueHolder添加到resolvedValues的泛型参数值的列表中
 				resolvedValues.addGenericArgumentValue(valueHolder);
 			}
 			else {
+				// 使用valueResolver解析出valueHolder实例的构造函数参数值所封装的对象
 				Object resolvedValue =
 						valueResolver.resolveValueIfNecessary("constructor argument", valueHolder.getValue());
+				// 使用valueHolder所封装的type,name属性以及解析出来的resovledValue构造出一个ConstructorArgumentValues.ValueHolder对象
 				ConstructorArgumentValues.ValueHolder resolvedValueHolder = new ConstructorArgumentValues.ValueHolder(
 						resolvedValue, valueHolder.getType(), valueHolder.getName());
+				// 将valueHolder作为resolvedValueHolder的配置源对象设置到resolvedValueHolder中
 				resolvedValueHolder.setSource(valueHolder);
+				// 将index和valueHolder添加到resolvedValues所封装的索引参数值的Map中
 				resolvedValues.addGenericArgumentValue(resolvedValueHolder);
 			}
 		}
 
+		// 返回最小(索引参数值数+泛型参数值数)
 		return minNrOfArgs;
 	}
 
 	/**
+	 * 给定已解析的构造函数参数值，创建一个参数数组以调用构造函数或工厂方法
+	 *
 	 * Create an array of arguments to invoke a constructor or factory method,
 	 * given the resolved constructor argument values.
 	 */
@@ -931,42 +996,69 @@ class ConstructorResolver {
 			BeanWrapper bw, Class<?>[] paramTypes, @Nullable String[] paramNames, Executable executable,
 			boolean autowiring, boolean fallback) throws UnsatisfiedDependencyException {
 
+		// 获取bean工厂的自定义的TypeConverter
 		TypeConverter customConverter = this.beanFactory.getCustomTypeConverter();
+		// 如果customConverter不为null,converter就引用customeConverter，否则引用bw
 		TypeConverter converter = (customConverter != null ? customConverter : bw);
-
+		// 根据paramTypes的数组长度构建一个ArgumentsHolder实例，用于保存解析后的参数值
 		ArgumentsHolder args = new ArgumentsHolder(paramTypes.length);
+		// 定义一个用于存储构造函数参数值Holder，以查找下一个任意泛型参数值时，忽略该集合的元素的HashSet,初始化长度为paramTypes的数组长度
 		Set<ConstructorArgumentValues.ValueHolder> usedValueHolders = new HashSet<>(paramTypes.length);
+		// 定义一个用于存储自动注入Bean名的LinkedHashSet
 		Set<String> autowiredBeanNames = new LinkedHashSet<>(4);
 
+		// fori形式遍历paramType,索引为paramIndex
 		for (int paramIndex = 0; paramIndex < paramTypes.length; paramIndex++) {
+			// 获取paramTypes中第paramIndex个参数类型
 			Class<?> paramType = paramTypes[paramIndex];
+			// 如果paramNames不为null，就引用第paramIndex个参数名否则引用空字符串
 			String paramName = (paramNames != null ? paramNames[paramIndex] : "");
 			// Try to find matching constructor argument value, either indexed or generic.
+			// 尝试找到匹配的构造函数参数值，无论是索引的还是泛型的,定义一个用于存储与paramIndex对应的ConstructorArgumentValues.ValueHolder实例
 			ConstructorArgumentValues.ValueHolder valueHolder = null;
+			// 如果resolvedValues不为null
 			if (resolvedValues != null) {
+				// 在resolvedValues中查找与paramIndex对应的参数值，或者按paramType一般匹配
 				valueHolder = resolvedValues.getArgumentValue(paramIndex, paramType, paramName, usedValueHolders);
 				// If we couldn't find a direct match and are not supposed to autowire,
 				// let's try the next generic, untyped argument value as fallback:
 				// it could match after type conversion (for example, String -> int).
+				// 如果找不到直接匹配并且不希望自动装配，请尝试使用一个通用的，无类型的参数值作为后备：
+				// 类型转换后可以匹配(例如String -> int)
+				// 如果valueHolder为null 且 (mbd不支持使用构造函数进行自动注入 或者 paramTypes数组长度与resolvedValues的(索引参数值+泛型参数值)数量相等)
 				if (valueHolder == null && (!autowiring || paramTypes.length == resolvedValues.getArgumentCount())) {
+					// 在resovledValues中查找任意，不按名称匹配参数值的下一个泛型参数值，而忽略usedValueHolders参数值
 					valueHolder = resolvedValues.getGenericArgumentValue(null, null, usedValueHolders);
 				}
 			}
+			// 如果valueHolder不为null
 			if (valueHolder != null) {
 				// We found a potential match - let's give it a try.
 				// Do not consider the same value definition multiple times!
+				// 我们找到了可能的匹配-让我们尝试一些。
+				// 不要考虑相同的值定义
+				// 将valueHolder添加到usedValueHolders中，以表示该valueHolder已经使用过，下次在resolvedValues中
+				// 获取下一个valueHolder时，不要返回同一个对象
 				usedValueHolders.add(valueHolder);
+				// 从valueHolder中获取原始参数值
 				Object originalValue = valueHolder.getValue();
+				// 定义一个用于存储转换后的参数值的Object对象
 				Object convertedValue;
+				// 如果valueHolder已经包含转换后的值
 				if (valueHolder.isConverted()) {
+					// 从valueHolder中获取转换后的参数值
 					convertedValue = valueHolder.getConvertedValue();
+					// 将convertedValue保存到args的preparedArguments数组的paramIndex对应元素中
 					args.preparedArguments[paramIndex] = convertedValue;
 				}
 				else {
+					// 将executable中paramIndex对应的参数封装成MethodParameter对象
 					MethodParameter methodParam = MethodParameter.forExecutable(executable, paramIndex);
 					try {
+						// 使用converter将originalValue转换为paramType类型
 						convertedValue = converter.convertIfNecessary(originalValue, paramType, methodParam);
 					}
+					// 捕捉在转换类型时出现的类型不匹配异常
 					catch (TypeMismatchException ex) {
 						throw new UnsatisfiedDependencyException(
 								mbd.getResourceDescription(), beanName, new InjectionPoint(methodParam),
@@ -974,34 +1066,52 @@ class ConstructorResolver {
 										ObjectUtils.nullSafeClassName(valueHolder.getValue()) +
 										"] to required type [" + paramType.getName() + "]: " + ex.getMessage());
 					}
+					// 获取valueHolder的源对象，一般是ValueHolder
 					Object sourceHolder = valueHolder.getSource();
+					// 如果sourceHolder是ConstructorArgumentValues.ValueHolder实例
 					if (sourceHolder instanceof ConstructorArgumentValues.ValueHolder) {
+						// 将sourceHolder转换为ConstructorArgumentValues.ValueHolder对象
 						Object sourceValue = ((ConstructorArgumentValues.ValueHolder) sourceHolder).getValue();
+						// 将args的resolveNecessary该为true，表示args.preparedArguments需要解析
 						args.resolveNecessary = true;
+						// 将sourceValue保存到args的preparedArguments数组的paramIndex对应元素中
 						args.preparedArguments[paramIndex] = sourceValue;
 					}
 				}
+				// 将convertedValue保存到args的arguments数组的paramIndex对应元素中
 				args.arguments[paramIndex] = convertedValue;
+				// 将originalValue保存到args的rawArguments数组的paramIndex对应元素中
 				args.rawArguments[paramIndex] = originalValue;
 			}
 			else {
+				// 否则(valueHolder不为null)
+				// 将executable中paramIndex对应的参数封装成MethodParameter对象
 				MethodParameter methodParam = MethodParameter.forExecutable(executable, paramIndex);
 				// No explicit match found: we're either supposed to autowire or
 				// have to fail creating an argument array for the given constructor.
+				// 找不到明确的匹配项:我们要么自动装配，要么必须为给定的构造函数创建参数数组而失败
+				// mbd不支持适用构造函数进行自动注入
 				if (!autowiring) {
+					// 抛出不满足依赖异常:类型为[paramType.getName]的参数的参数值不明确-您是否指定了正确的bean引用作为参数？
 					throw new UnsatisfiedDependencyException(
 							mbd.getResourceDescription(), beanName, new InjectionPoint(methodParam),
 							"Ambiguous argument values for parameter of type [" + paramType.getName() +
-							"] - did you specify the correct bean references as arguments?");
+									"] - did you specify the correct bean references as arguments?");
 				}
 				try {
+					// 解析应该自动装配的methodParam的Bean对象,使用autowiredBeanNames保存所找到的所有候选Bean对象
 					Object autowiredArgument = resolveAutowiredArgument(
 							methodParam, beanName, autowiredBeanNames, converter, fallback);
+					// 将autowiredArgument保存到args的rawArguments数组的paramIndex对应元素中
 					args.rawArguments[paramIndex] = autowiredArgument;
+					// 将autowiredArgument保存到args的arguments数组的paramIndex对应元素中
 					args.arguments[paramIndex] = autowiredArgument;
+					// 将autowiredArgumentMarker保存到args的arguments数组的paramIndex对应元素中
 					args.preparedArguments[paramIndex] = autowiredArgumentMarker;
+					// 将args的resolveNecessary该为true，表示args.preparedArguments需要解析
 					args.resolveNecessary = true;
 				}
+				// 捕捉解析应该自动装配的methodParam的Bean对象时出现的BeanException
 				catch (BeansException ex) {
 					throw new UnsatisfiedDependencyException(
 							mbd.getResourceDescription(), beanName, new InjectionPoint(methodParam), ex);
@@ -1009,8 +1119,11 @@ class ConstructorResolver {
 			}
 		}
 
+		// 遍历autowiredBeanNames，元素为autowiredBeanName
 		for (String autowiredBeanName : autowiredBeanNames) {
+			// 注册beanName与dependentBeanNamed的依赖关系到beanFactory中
 			this.beanFactory.registerDependentBean(autowiredBeanName, beanName);
+			// 如果当前日志级别时debug
 			if (logger.isDebugEnabled()) {
 				logger.debug("Autowiring by type from bean name '" + beanName +
 						"' via " + (executable instanceof Constructor ? "constructor" : "factory method") +
@@ -1018,10 +1131,13 @@ class ConstructorResolver {
 			}
 		}
 
+		// 将args(保存着解析后的参数值的ArgumentsHolder对象)返回出去
 		return args;
 	}
 
 	/**
+	 * 解析缓存在mbd中准备好的参数值:
+	 *
 	 * Resolve the prepared arguments stored in the given bean definition.
 	 */
 	private Object[] resolvePreparedArguments(String beanName, RootBeanDefinition mbd, BeanWrapper bw,
@@ -1093,68 +1209,103 @@ class ConstructorResolver {
 	}
 
 	/**
+	 * 解析应该自动装配的指定参数的Bean对象
+	 *
 	 * Template method for resolving the specified argument which is supposed to be autowired.
 	 */
 	@Nullable
 	protected Object resolveAutowiredArgument(MethodParameter param, String beanName,
 			@Nullable Set<String> autowiredBeanNames, TypeConverter typeConverter, boolean fallback) {
 
+		// 获取param的参数类型
 		Class<?> paramType = param.getParameterType();
+		// InjectionPoint用于描述一个AOP注入点,如果paramType属于InjectionPoint
 		if (InjectionPoint.class.isAssignableFrom(paramType)) {
+			// 从线程本地中获取当前切入点对象，该对象一般在Bean工厂解析出与descriptor所包装的对象匹配的候选Bean对象的时候设置
 			InjectionPoint injectionPoint = currentInjectionPoint.get();
+			// 如果injectionPoint为null
 			if (injectionPoint == null) {
+				// 抛出非法状态异常:当前没有InjectionPoint可用于param
 				throw new IllegalStateException("No current InjectionPoint available for " + param);
 			}
+			// 返回当前injectionPoint对象
 			return injectionPoint;
 		}
 		try {
+			// DependencyDescriptor：即将注入的特定依赖项描述符。包装构造函数，方法参数或字段，以允许对其元数据 的统一访问
+			// 该DependencyDescriptor对象的依赖类型就是指param的类型
+			// 将param封装成DependencyDescriptor对象，让当前Bean工厂根据该DependencyDescriptor对象的依赖类型解析出与
+			// 该DependencyDescriptor对象所包装的对象匹配的候选Bean对象，然后返回出去
 			return this.beanFactory.resolveDependency(
 					new DependencyDescriptor(param, true), beanName, autowiredBeanNames, typeConverter);
 		}
+		// 捕捉没有唯一的BeanDefinition异常
 		catch (NoUniqueBeanDefinitionException ex) {
 			throw ex;
 		}
+		// 捕捉没有此类beanDefinition异常
 		catch (NoSuchBeanDefinitionException ex) {
+			// 如果可在没有此类BeanDefinition的时候回退
 			if (fallback) {
 				// Single constructor or factory method -> let's return an empty array/collection
 				// for e.g. a vararg or a non-null List/Set/Map parameter.
+				// 单一构造函数或工厂方法->让我们返回一个空数组/集合，例如vararg或非null的List/Set/Map对象
+				// 如果参数类型是数组类型
 				if (paramType.isArray()) {
+					// 根据参数数组的元素类型新建一个空数组对象
 					return Array.newInstance(paramType.getComponentType(), 0);
 				}
+				// 如果paramType是否是常见的Collection类
 				else if (CollectionFactory.isApproximableCollectionType(paramType)) {
+					// 根据参数类型创建对应的Collection对象
 					return CollectionFactory.createCollection(paramType, 0);
 				}
+				// 如果paramType是否是常见的Map类
 				else if (CollectionFactory.isApproximableMapType(paramType)) {
+					// 根据参数类型创建对应的Map对象
 					return CollectionFactory.createMap(paramType, 0);
 				}
 			}
+			// 不可以回退，或者参数类型不是常见数组/集合类型时，重新抛出异常
 			throw ex;
 		}
 	}
 
+	// 设置新得当前切入点对象，返回旧的当前切入点对象
 	static InjectionPoint setCurrentInjectionPoint(@Nullable InjectionPoint injectionPoint) {
+		// 从线程本地的当前切入点对象中获取旧的InjectionPoint对象
 		InjectionPoint old = currentInjectionPoint.get();
+		// 如果injectionPoint不为null
 		if (injectionPoint != null) {
+			// 将injectionPoint设置成当前切入点对象
 			currentInjectionPoint.set(injectionPoint);
 		}
 		else {
+			// 移除当前切入点对象
 			currentInjectionPoint.remove();
 		}
+		// 返回旧得切入带你对象
 		return old;
 	}
 
 
 	/**
+	 * 私有内部类，用于保存参数组合
+	 *
 	 * Private inner class for holding argument combinations.
 	 */
 	private static class ArgumentsHolder {
 
+		// 原始参数值数组
 		public final Object[] rawArguments;
 
+		// 经过转换后参数值数组
 		public final Object[] arguments;
 
+		// 准备好的参数值数组，保存着 由解析的自动装配参数替换的标记和源参数值
 		public final Object[] preparedArguments;
 
+		// 需要解析的标记，默认为false
 		public boolean resolveNecessary = false;
 
 		public ArgumentsHolder(int size) {
@@ -1169,38 +1320,71 @@ class ConstructorResolver {
 			this.preparedArguments = args;
 		}
 
+		/**
+		 * 获取类型差异权重，宽容模式下使用
+		 * 1、获取表示paramTypes和arguments之间的类层次结构差异的权重【变量 typeDiffWeight】
+		 * 2、获取表示paramTypes和rawArguments之间的类层次结构差异的权重【变量 rawTypeDiffWeight】
+		 * 3、比较typeDiffWeight和rawTypeDiffWeight取最小权重并返回出去，但是还是以原始类型优先，因为差异值还-1024
+		 */
 		public int getTypeDifferenceWeight(Class<?>[] paramTypes) {
 			// If valid arguments found, determine type difference weight.
 			// Try type difference weight on both the converted arguments and
 			// the raw arguments. If the raw weight is better, use it.
 			// Decrease raw weight by 1024 to prefer it over equal converted weight.
+			// 如果找到有效的参数，请确定类型差异权重。尝试对转换后的参数和原始参数都使用类型差异权重。如果
+			// 原始重量更好，请使用它。将原始重量减少1024，以使其优于相等的转换重量。
+			// MethodInvoker.getTypeDifferenceWeight-确定表示类型和参数之间的类层次结构差异的权重：
+			// 1. arguments的类型不paramTypes类型的子类，直接返回 Integer.MAX_VALUE,最大重量，也就是直接不匹配
+			// 2. paramTypes类型是arguments类型的父类则+2
+			// 3. paramTypes类型是arguments类型的接口，则+1
+			// 4. arguments的类型直接就是paramTypes类型,则+0
+			// 获取表示paramTypes和arguments之间的类层次结构差异的权重
 			int typeDiffWeight = MethodInvoker.getTypeDifferenceWeight(paramTypes, this.arguments);
+			// 获取表示paramTypes和rawArguments之间的类层次结构差异的权重
 			int rawTypeDiffWeight = MethodInvoker.getTypeDifferenceWeight(paramTypes, this.rawArguments) - 1024;
+			// 取最小权重，但是还是以原始类型优先，因为差异值还-1024
 			return Math.min(rawTypeDiffWeight, typeDiffWeight);
 		}
 
+		// 获取Assignabliity权重，严格模式下使用
 		public int getAssignabilityWeight(Class<?>[] paramTypes) {
+			// fori形式遍历paramTypes
 			for (int i = 0; i < paramTypes.length; i++) {
+				// 如果确定arguments不是paramTypes的实例
 				if (!ClassUtils.isAssignableValue(paramTypes[i], this.arguments[i])) {
+					// 返回Integer最大值，意味着既然连最终的转换后参数值都不能匹配，这个情况下的paramTypes所对应的工厂方法是不可以接受的
 					return Integer.MAX_VALUE;
 				}
 			}
+			// fori形式遍历paramTypes
 			for (int i = 0; i < paramTypes.length; i++) {
+				// 如果确定rawArguments不是paramTypes的实例
 				if (!ClassUtils.isAssignableValue(paramTypes[i], this.rawArguments[i])) {
+					// 返回Integer最大值-512，意味着虽然转换后的参数值匹配，但是原始的参数值不匹配，这个情况下的paramTypes所对应的工厂方法还是可以接受的
 					return Integer.MAX_VALUE - 512;
 				}
 			}
+			// 在完全匹配的情况下，返回Integer最大值-1024；意味着因为最终的转换后参数值和原始参数值都匹配，这种情况下paramTypes所对应的工厂方法非常可以接收
 			return Integer.MAX_VALUE - 1024;
 		}
 
+		/**
+		 * 将ArgumentsHolder所得到的参数值属性缓存到mbd对应的属性中
+		 */
 		public void storeCache(RootBeanDefinition mbd, Executable constructorOrFactoryMethod) {
+			// 使用mbd的构造函数通用锁【{@link RootBeanDefinition#constructorArgumentLock}】加锁以保证线程安全
 			synchronized (mbd.constructorArgumentLock) {
+				// 让mbd的已解析的构造函数或工厂方法【{@link RootBeanDefinition#resolvedConstructorOrFactoryMethod}】引用constructorOrFactoryMethod
 				mbd.resolvedConstructorOrFactoryMethod = constructorOrFactoryMethod;
+				// 将mdb的构造函数参数已解析标记【{@link RootBeanDefinition#constructorArgumentsResolved}】设置为true
 				mbd.constructorArgumentsResolved = true;
+				// 如果resolveNecessary为true，表示参数还需要进一步解析
 				if (this.resolveNecessary) {
+					// 让mbd的缓存部分准备好的构造函数参数值属性【{@link RootBeanDefinition#preparedConstructorArguments}】引用preparedArguments
 					mbd.preparedConstructorArguments = this.preparedArguments;
 				}
 				else {
+					// 让mbd的缓存完全解析的构造函数参数属性【{@link RootBeanDefinition#resolvedConstructorArguments}】引用arguments
 					mbd.resolvedConstructorArguments = this.arguments;
 				}
 			}
@@ -1209,22 +1393,30 @@ class ConstructorResolver {
 
 
 	/**
+	 * 用于检查Java 6的{@link ConstructorProperties}注解的委托类
+	 *
 	 * Delegate for checking Java 6's {@link ConstructorProperties} annotation.
 	 */
 	private static class ConstructorPropertiesChecker {
 
 		@Nullable
 		public static String[] evaluate(Constructor<?> candidate, int paramCount) {
+			// 获取candidate中的ConstructorProperties注解
 			ConstructorProperties cp = candidate.getAnnotation(ConstructorProperties.class);
+			// 如果cp不为null
 			if (cp != null) {
+				// 获取cp指定的getter方法的属性名
 				String[] names = cp.value();
+				// 如果names长度于paramCount不相等
 				if (names.length != paramCount) {
 					throw new IllegalStateException("Constructor annotated with @ConstructorProperties but not " +
 							"corresponding to actual number of parameters (" + paramCount + "): " + candidate);
 				}
+				// 将name返回出去
 				return names;
 			}
 			else {
+				// 如果没有配置ConstructorProperties注解，则返回null
 				return null;
 			}
 		}

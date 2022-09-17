@@ -46,6 +46,8 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 /**
+ * 在bean工厂实现中使用Helper类，它将beanDefinition对象中包含的值解析为应用于目标bean实例的实际值
+ *
  * Helper class for use in bean factory implementations,
  * resolving values contained in bean definition objects
  * into the actual values applied to the target bean instance.
@@ -301,59 +303,85 @@ class BeanDefinitionValueResolver {
 	}
 
 	/**
+	 * 在value封装的value可解析成表达式的情况下,将value封装的value评估为表达式并解析出表达式的值
+	 *
 	 * Evaluate the given value as an expression, if necessary.
 	 * @param value the candidate value (may be an expression)
 	 * @return the resolved value
 	 */
 	@Nullable
 	protected Object evaluate(TypedStringValue value) {
+		//如有必要(value可解析成表达式的情况下)，将value封装的value评估为表达式并解析出表达式的值
 		Object result = doEvaluate(value.getValue());
+		//如果result与value所封装的value不相等
 		if (!ObjectUtils.nullSafeEquals(result, value.getValue())) {
+			//将value标记为动态，即包含一个表达式，因此不进行缓存
 			value.setDynamic();
 		}
 		return result;
 	}
 
 	/**
+	 * 对于value是String/String[]类型会尝试评估为表达式并解析出表达式的值，其他类型直接返回value
+	 *
 	 * Evaluate the given value as an expression, if necessary.
 	 * @param value the original value (may be an expression)
 	 * @return the resolved value if necessary, or the original value
 	 */
 	@Nullable
 	protected Object evaluate(@Nullable Object value) {
+		//如果value是String对象
 		if (value instanceof String) {
+			//如有必要(value可解析成表达式的情况下)，将value评估为表达式并解析出表达式的值并返回出去
 			return doEvaluate((String) value);
 		}
+		//如果value是String数组对象
 		else if (value instanceof String[]) {
+			//将value强转为String数组
 			String[] values = (String[]) value;
+			//是否经过解析的标记，默认为false
 			boolean actuallyResolved = false;
+			//定义用于存放解析的值的Object数组，长度为values的长度
 			Object[] resolvedValues = new Object[values.length];
+			//遍历values(以fori形式)
 			for (int i = 0; i < values.length; i++) {
+				//获取第i个values元素
 				String originalValue = values[i];
+				//如有必要(value可解析成表达式的情况下)，将originalValue评估为表达式并解析出表达式的值
 				Object resolvedValue = doEvaluate(originalValue);
+				//如果resolvedValue与orgininalValue不是同一个对象
 				if (resolvedValue != originalValue) {
+					//经过解析标记为true，表示已经过解析
 					actuallyResolved = true;
 				}
+				//将resolvedValue赋值第i个resolvedValues元素中
 				resolvedValues[i] = resolvedValue;
 			}
+			//如果已经过解析，返回解析后的数组【resovledValues】；否则返回values
 			return (actuallyResolved ? resolvedValues : values);
 		}
 		else {
+			//其他类型直接返回value
 			return value;
 		}
 	}
 
 	/**
+	 * 如有必要(value可解析成表达式的情况下)，将给定的String值评估为表达式并解析出表达式的值
+	 *
 	 * Evaluate the given String value as an expression, if necessary.
 	 * @param value the original value (may be an expression)
 	 * @return the resolved value if necessary, or the original String value
 	 */
 	@Nullable
 	private Object doEvaluate(@Nullable String value) {
+		// 评估value,如果value是可解析表达式，会对其进行解析，否则直接返回value
 		return this.beanFactory.evaluateBeanDefinitionString(value, this.beanDefinition);
 	}
 
 	/**
+	 * 在给定的TypedStringValue中解析目标类型
+	 *
 	 * Resolve the target type in the given TypedStringValue.
 	 * @param value the TypedStringValue to resolve
 	 * @return the resolved target type (or {@code null} if none specified)
@@ -362,13 +390,18 @@ class BeanDefinitionValueResolver {
 	 */
 	@Nullable
 	protected Class<?> resolveTargetType(TypedStringValue value) throws ClassNotFoundException {
+		//如果value有携带目标类型
 		if (value.hasTargetType()) {
+			//返回value的目标类型
 			return value.getTargetType();
 		}
+		//从value中解析出目标类型
 		return value.resolveTargetType(this.beanFactory.getBeanClassLoader());
 	}
 
 	/**
+	 * 解析出对应ref所封装的Bean元信息(即Bean名,Bean类型)的Bean对象，在工厂中解决对另一个bean的引用
+	 *
 	 * Resolve a reference to another bean in the factory.
 	 */
 	@Nullable
@@ -433,6 +466,8 @@ class BeanDefinitionValueResolver {
 	}
 
 	/**
+	 * 解析出内部Bean对象
+	 *
 	 * Resolve an inner bean definition.
 	 * @param argName the name of the argument that the inner bean is defined for
 	 * @param innerBeanName the name of the inner bean
@@ -441,70 +476,107 @@ class BeanDefinitionValueResolver {
 	 */
 	@Nullable
 	private Object resolveInnerBean(Object argName, String innerBeanName, BeanDefinition innerBd) {
+		//定义一个用于保存innerBd与beanDefinition合并后的BeanDefinition对象的变量
 		RootBeanDefinition mbd = null;
 		try {
+			//获取innerBd与beanDefinition合并后的BeanDefinition对象
 			mbd = this.beanFactory.getMergedBeanDefinition(innerBeanName, innerBd, this.beanDefinition);
 			// Check given bean name whether it is unique. If not already unique,
 			// add counter - increasing the counter until the name is unique.
+			// 检查给定的Bean名是否唯一。如果还不是唯一的,添加计数器-增加计数器,直到名称唯一为止.
+			// 解决内部Bean名需要唯一的问题
+			// 定义实际的内部Bean名,初始为innerBeanName
 			String actualInnerBeanName = innerBeanName;
+			//如果mbd配置成了单例
 			if (mbd.isSingleton()) {
+				// 调整innerBeanName,直到该Bean名在工厂中唯一。最后将结果赋值给actualInnerBeanName
 				actualInnerBeanName = adaptInnerBeanName(innerBeanName);
 			}
+			// 将actualInnerBeanName和beanName的包含关系注册到该工厂中
 			this.beanFactory.registerContainedBean(actualInnerBeanName, this.beanName);
 			// Guarantee initialization of beans that the inner bean depends on.
+			// 确保内部Bean依赖的Bean的初始化，获取mdb的要依赖的Bean名
 			String[] dependsOn = mbd.getDependsOn();
+			//如果有需要依赖的Bean名
 			if (dependsOn != null) {
+				//遍历depensOn
 				for (String dependsOnBean : dependsOn) {
+					//注册dependsOnBean与actualInnerBeanName的依赖关系到该工厂中
 					this.beanFactory.registerDependentBean(dependsOnBean, actualInnerBeanName);
+					//获取dependsOnBean的Bean对像(不引用，只是为了让dependsOnBean所对应的Bean对象实例化)
 					this.beanFactory.getBean(dependsOnBean);
 				}
 			}
 			// Actually create the inner bean instance now...
+			// 实际上现有创建内部bean实例，创建actualInnerBeanName的Bean对象
 			Object innerBean = this.beanFactory.createBean(actualInnerBeanName, mbd, null);
+			//如果innerBean时FactoryBean的实例
 			if (innerBean instanceof FactoryBean) {
+				//mbds是否是"synthetic"的标记。一般是指只有AOP相关的prointCut配置或者Advice配置才会将 synthetic设置为true
 				boolean synthetic = mbd.isSynthetic();
+				//从BeanFactory对象中获取管理的对象，只有mbd不是synthetic才对其对象进行该工厂的后置处理
 				innerBean = this.beanFactory.getObjectFromFactoryBean(
 						(FactoryBean<?>) innerBean, actualInnerBeanName, !synthetic);
 			}
+			//如果innerBean是NullBean实例
 			if (innerBean instanceof NullBean) {
+				//将innerBean设置为null
 				innerBean = null;
 			}
+			//返回actualInnerBeanName的Bean对象【innerBean】
 			return innerBean;
 		}
+		//捕捉解析内部Bean对象过程中抛出的Bean包和子包中引发的所有异常
 		catch (BeansException ex) {
 			throw new BeanCreationException(
 					this.beanDefinition.getResourceDescription(), this.beanName,
 					"Cannot create inner bean '" + innerBeanName + "' " +
-					(mbd != null && mbd.getBeanClassName() != null ? "of type [" + mbd.getBeanClassName() + "] " : "") +
-					"while setting " + argName, ex);
+							(mbd != null && mbd.getBeanClassName() != null ? "of type [" + mbd.getBeanClassName() + "] " : "") +
+							"while setting " + argName, ex);
 		}
 	}
 
 	/**
+	 * 检查给定Bean名是否唯一.如果还不是唯一的,则添加该计数器,直到名称唯一位置
+	 *
 	 * Checks the given bean name whether it is unique. If not already unique,
 	 * a counter is added, increasing the counter until the name is unique.
 	 * @param innerBeanName the original name for the inner bean
 	 * @return the adapted name for the inner bean
 	 */
 	private String adaptInnerBeanName(String innerBeanName) {
+		//定义一个实际内部Bean名变量，初始为innerBean名
 		String actualInnerBeanName = innerBeanName;
+		//定义一个用于计数的计数器，初始为0
 		int counter = 0;
+		// 获取前缀
 		String prefix = innerBeanName + BeanFactoryUtils.GENERATED_BEAN_NAME_SEPARATOR;
+		//只要actualInnerBeanName是否已在该工厂中使用就继续循环,即actualInnerBeanName是否是别名
+		// 或该工厂是否已包含actualInnerBeanName的bean对象 或 该工厂是否已经为actualInnerBeanName注册了依赖Bean关系
 		while (this.beanFactory.isBeanNameInUse(actualInnerBeanName)) {
+			//计数器+1
 			counter++;
+			//让actualInnerBeanName重新引用拼接后的字符串:innerBeanName+'#'+count
 			actualInnerBeanName = prefix + counter;
 		}
+		//返回经过调整后的Bean名
 		return actualInnerBeanName;
 	}
 
 	/**
+	 * 解析ManagedArray对象，以得到解析后的数组对象
+	 *
 	 * For each element in the managed array, resolve reference if necessary.
 	 */
 	private Object resolveManagedArray(Object argName, List<?> ml, Class<?> elementType) {
+		//创建一个用于存放解析后的实例对象的elementType类型长度为ml大小的数组
 		Object resolved = Array.newInstance(elementType, ml.size());
+		//遍历ml(以fori形式)
 		for (int i = 0; i < ml.size(); i++) {
+			//获取第i个ml元素对象，解析出该元素对象的实例对象然后设置到第i个resolved元素中
 			Array.set(resolved, i, resolveValueIfNecessary(new KeyedArgName(argName, i), ml.get(i)));
 		}
+		//返回解析后的的数组对象【resolved】
 		return resolved;
 	}
 
@@ -512,34 +584,51 @@ class BeanDefinitionValueResolver {
 	 * For each element in the managed list, resolve reference if necessary.
 	 */
 	private List<?> resolveManagedList(Object argName, List<?> ml) {
+		//定义一个用于存放解析后的实例对象的ArrayList，初始容量为ml大小
 		List<Object> resolved = new ArrayList<>(ml.size());
+		//遍历ml(以fori形式)
 		for (int i = 0; i < ml.size(); i++) {
+			//获取第i个ml元素对象，解析出该元素对象的实例对象然后添加到resolved中
 			resolved.add(resolveValueIfNecessary(new KeyedArgName(argName, i), ml.get(i)));
 		}
 		return resolved;
 	}
 
 	/**
+	 * 解析ManagedList对象，以得到解析后的List对象
+	 *
 	 * For each element in the managed set, resolve reference if necessary.
 	 */
 	private Set<?> resolveManagedSet(Object argName, Set<?> ms) {
+		//定义一个用于存放解析后的实例对象的LinkedHashSet，初始容量为ms大小
 		Set<Object> resolved = new LinkedHashSet<>(ms.size());
+		//定义一个遍历时的偏移量i
 		int i = 0;
+		//遍历ms，元素为m
 		for (Object m : ms) {
+			//解析出该m的实例对象然后添加到resolved中
 			resolved.add(resolveValueIfNecessary(new KeyedArgName(argName, i), m));
+			//偏移量+1
 			i++;
 		}
 		return resolved;
 	}
 
 	/**
+	 * 解析ManagedSet对象，以得到解析后的Set对象
+	 *
 	 * For each element in the managed map, resolve reference if necessary.
 	 */
 	private Map<?, ?> resolveManagedMap(Object argName, Map<?, ?> mm) {
+		//定义用于存储解析后的key实例对象和value实例对象的LinkedHashMap,长度为mm的大小
 		Map<Object, Object> resolved = new LinkedHashMap<>(mm.size());
+		//遍历mm
 		mm.forEach((key, value) -> {
+			//解析mm的key的实例对象
 			Object resolvedKey = resolveValueIfNecessary(argName, key);
+			//解析mm的value的实例对象
 			Object resolvedValue = resolveValueIfNecessary(new KeyedArgName(argName, key), value);
+			//将解析出来的key和value的实例对象添加到resolved中
 			resolved.put(resolvedKey, resolvedValue);
 		});
 		return resolved;
@@ -551,10 +640,13 @@ class BeanDefinitionValueResolver {
 	 */
 	private static class KeyedArgName {
 
+		// 参数名
 		private final Object argName;
 
+		// 键值
 		private final Object key;
 
+		// 新建一个KeyedArgName对象
 		public KeyedArgName(Object argName, Object key) {
 			this.argName = argName;
 			this.key = key;
